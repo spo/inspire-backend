@@ -9,5 +9,8 @@ const {
 module.exports = {
   shopify: {
     endpoint: `https://${API_KEY_SHOPIFY}:${API_SECRET_KEY_SHOPIFY}@${HOST_SHOPIFY}/admin/api/${API_VERSION_SHOPIFY}/graphql.json`,
+    location: {
+      fuersten: {id: "gid://shopify/Location/66785018045"},
+    },
   },
 };

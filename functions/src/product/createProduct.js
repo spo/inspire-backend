@@ -36,7 +36,7 @@ exports.createProduct = functions.https.onRequest(async (req, res) => {
           inventoryPolicy: "DENY",
           inventoryQuantities: {
             availableQuantity: 5,
-            locationId: "gid://shopify/Location/66785018045",
+            locationId: config.shopify.location.fuersten.id,
           },
           options: [
             "25",
