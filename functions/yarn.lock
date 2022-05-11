@@ -960,10 +960,10 @@
     "@types/lodash" "^4.14.104"
     "lodash" "^4.17.5"
 
-"firebase-functions@^3.18.0", "firebase-functions@>=2.0.0":
-  "integrity" "sha512-x8TEWOsaUnytsNBkrpraa2pOokdjMaGnOkcKdC6HDX/tvlBxrdNpvAMc+Vu/u0lzow9Hs+W+3jEe6Ss4duIz6g=="
-  "resolved" "https://registry.npmjs.org/firebase-functions/-/firebase-functions-3.20.1.tgz"
-  "version" "3.20.1"
+"firebase-functions@^3.21.0", "firebase-functions@>=2.0.0":
+  "integrity" "sha512-Xl0EFV05+RSB9hJHlo12LguoRqAmpSXmBnpI0MANeNj07dGW0QCWPHtaAewxYEzRS3RfSCL8WH12rjvo0PPKGw=="
+  "resolved" "https://registry.npmjs.org/firebase-functions/-/firebase-functions-3.21.0.tgz"
+  "version" "3.21.0"
   dependencies:
     "@types/cors" "^2.8.5"
     "@types/express" "4.17.3"
