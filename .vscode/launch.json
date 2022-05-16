@@ -5,7 +5,8 @@
             "type": "node",
             "request": "attach",
             "name": "Attach to Functions",
-            "port": 5001
+            "port": 5001, 
+            "restart": true,
         }
     ]
   }

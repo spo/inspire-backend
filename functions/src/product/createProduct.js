@@ -58,7 +58,7 @@ exports.createProduct = functions.https.onRequest(async (req, res) => {
 
   try {
     const data = await request(config.shopify.endpoint, mutation, variables);
-    res.send(data);
+    res.send(data); // TODO status(200).send
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
   }

@@ -1,41 +1,53 @@
-const functions = require("firebase-functions");
+/* eslint-disable max-len */
 const fetch = require("node-fetch");
+const functions = require("firebase-functions");
+require("dotenv").config();
+
+const {SERPAPI_API_KEY, SERPAPI_URL, SERPAPI_GOOGLE_DOMAIN_DE, SERPAPI_LOCATION} = process.env;
 
 // eslint-disable-next-line max-len
-exports.scrapProductData = functions.https.onRequest(async (request, response) => {
+// TODO: rename loadGoogleShoppingData
+exports.scrapProductData = async (productId, ean) => {
   // get google product id
-  const urlSearch = "https://serpapi.com/search?";
+  const urlSearch = SERPAPI_URL;
   const paramsSearch = new URLSearchParams({
     engine: "google",
-    q: "3614228220903",
-    location: "Germany",
-    google_domain: "google.de",
+    q: ean,
+    location: SERPAPI_LOCATION,
+    google_domain: SERPAPI_GOOGLE_DOMAIN_DE,
     gl: "de",
     hl: "de",
     tbm: "shop",
-    api_key: "dedc7e9920b560f037837346cee499b06275010ef714c0a71ddf2097d31e790c",
+    api_key: SERPAPI_API_KEY,
   });
 
   const responseProductId = await fetch(urlSearch + paramsSearch);
   const dataProductId = await responseProductId.json();
 
-  // get google product data
-  const productId = dataProductId.shopping_results[0].product_id;
+  if (dataProductId.error) {
+    functions.logger.info("Could not load google shopping data for product id:", productId, dataProductId, {
+      structuredData: true,
+    });
+    return dataProductId;
+  } else {
+    // get google product data
+    const productId = dataProductId.shopping_results[0].product_id;
 
-  const urlProduct = "https://serpapi.com/search?";
-  const paramsProduct = new URLSearchParams({
-    engine: "google_product",
-    google_domain: "google.de",
-    product_id: productId,
-    location: "Germany",
-    gl: "de",
-    hl: "de",
-    api_key: "dedc7e9920b560f037837346cee499b06275010ef714c0a71ddf2097d31e790c",
-  });
+    const urlProduct = SERPAPI_URL;
+    const paramsProduct = new URLSearchParams({
+      engine: "google_product",
+      google_domain: SERPAPI_GOOGLE_DOMAIN_DE,
+      product_id: productId,
+      location: SERPAPI_LOCATION,
+      gl: "de",
+      hl: "de",
+      api_key: SERPAPI_API_KEY,
+    });
 
-  const responseProduct = await fetch(urlProduct + paramsProduct);
-  const dataProduct = await responseProduct.json();
+    const responseProduct = await fetch(urlProduct + paramsProduct);
+    const dataProduct = await responseProduct.json();
+    return dataProduct;
+  }
+};
 
-  response.send(dataProduct);
-});
 
