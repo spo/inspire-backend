@@ -172,7 +172,7 @@ async function addImageToProductVariant(product, variant, googleShoppingMedia) {
   const mediaId = productCreateMedia.media[0].id;
 
   // Poll each sec until media is ready
-  const resultProductVariantAppendMedia = await pollProductVariantAppendMedia(() => productVariantAppendMedia(product.id, variant.id, mediaId), "NON_READY_MEDIA", 1000);
+  const resultProductVariantAppendMedia = await pollProductVariantAppendMedia(() => mutationProductVariantAppendMedia(product.id, variant.id, mediaId), "NON_READY_MEDIA", 1000);
 
   if (resultProductVariantAppendMedia.userErrors && resultProductVariantAppendMedia.userErrors.length > 0) {
     const {code, field, message} = resultProductVariantAppendMedia.userErrors[0];
@@ -322,7 +322,7 @@ async function mutationProductCreateMedia(originalSource, title, productId) {
  * @param {displayName} variantId The title is used for image alt
  * @param {string} mediaId The product id to attach the image to the right product
 */
-const productVariantAppendMedia = async (productId, variantId, mediaId) => {
+const mutationProductVariantAppendMedia = async (productId, variantId, mediaId) => {
   const mutationProductVariantAppendMedia = gql`
   mutation ($productId: ID!, $variantMedia: [ProductVariantAppendMediaInput!]!) {
     productVariantAppendMedia(productId: $productId, variantMedia: $variantMedia) {
