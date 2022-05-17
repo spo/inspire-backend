@@ -118,12 +118,12 @@ async function loopProductVariantsSlice(product, productList) {
 
 /**
  * Add image to product variant
- * @param {*} product Product that includes variants
- * @param {*} variant Variants to add images
- * @param {*} googleShoppingMedia Media such as iamges from google shopping
+ * @param {object} product Product that includes variants
+ * @param {object} variant Variants to add images
+ * @param {object} googleShoppingData Media such as iamges from google shopping
  * @return {object} The variant object
  */
-async function addImageToProductVariant(product, variant, googleShoppingMedia) {
+async function addDescriptionToProduct(product, variant, googleShoppingData) {
   // Skip variants with existing images
   if (variant.image ) {
     functions.logger.warn("Variant has existing images already", variant.id, variant.displayName, {
@@ -132,7 +132,80 @@ async function addImageToProductVariant(product, variant, googleShoppingMedia) {
     return;
   }
 
-  const {media, error} = googleShoppingMedia.product_results;
+  const {media, error} = googleShoppingData.product_results;
+
+  // Skip if no google shopping media data
+  if (error) {
+    functions.logger.warn("No google shopping media data for", variant.id, variant.displayName, error, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  // Use alwasy first image from google shopping result
+  const medium = media[0];
+
+  // Skip non image types
+  if (!medium.type === "image") {
+    functions.logger.warn("No image type for variant", variant.id, variant.displayName, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  const resultProductCreateMedia = await mutationProductCreateMedia(medium.link, product.title, product.id);
+
+  const {productCreateMedia} = resultProductCreateMedia;
+  const {code, field, message} = productCreateMedia.mediaUserErrors;
+
+  if (productCreateMedia.mediaUserErrors.length > 0 ) {
+    functions.logger.info("Could not create media for variant", variant.id, variant.displayName, code, field, message, {
+      structuredData: true,
+    });
+    return;
+  } else {
+    functions.logger.info("Create media for variant", variant.id, variant.displayName, {
+      structuredData: true,
+    });
+  }
+
+  const mediaId = productCreateMedia.media[0].id;
+
+  // Poll each sec until media is ready
+  const resultProductVariantAppendMedia = await pollProductVariantAppendMedia(() => mutationProductVariantAppendMedia(product.id, variant.id, mediaId), "NON_READY_MEDIA", 1000);
+
+  if (resultProductVariantAppendMedia.userErrors && resultProductVariantAppendMedia.userErrors.length > 0) {
+    const {code, field, message} = resultProductVariantAppendMedia.userErrors[0];
+    functions.logger.info("Could not attach media to variant", variant.id, variant.displayName, code, field, message, {
+      structuredData: true,
+    });
+    return;
+  } else {
+    functions.logger.log("Attach media to variant", variant.id, variant.displayName, {
+      structuredData: true,
+    });
+
+    return variant;
+  }
+}
+
+/**
+ * Add image to product variant
+ * @param {object} product Product that includes variants
+ * @param {object} variant Variants to add images
+ * @param {object} googleShoppingData Product information from google shopping
+ * @return {object} The variant object
+ */
+async function addImageToProductVariant(product, variant, googleShoppingData) {
+  // Skip variants with existing images
+  if (variant.image ) {
+    functions.logger.warn("Variant has existing images already", variant.id, variant.displayName, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  const {media, error} = googleShoppingData.product_results;
 
   // Skip if no google shopping media data
   if (error) {
@@ -318,9 +391,9 @@ async function mutationProductCreateMedia(originalSource, title, productId) {
 
 /**
  * Attach media to product variant
- * @param {string} productId The image url
- * @param {displayName} variantId The title is used for image alt
- * @param {string} mediaId The product id to attach the image to the right product
+ * @param {string} productId The product id
+ * @param {string} variantId The variant id
+ * @param {string} mediaId The media id
 */
 const mutationProductVariantAppendMedia = async (productId, variantId, mediaId) => {
   const mutationProductVariantAppendMedia = gql`
@@ -351,6 +424,44 @@ const mutationProductVariantAppendMedia = async (productId, variantId, mediaId) 
 
   try {
     const data = await request(config.shopify.endpoint, mutationProductVariantAppendMedia, variables);
+    return data;
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
+  }
+};
+
+/**
+ * Attach media to product variant
+ * @param {string} productId The product id to be updated
+ * @param {string} title Title to be changed
+ * @param {string} description Description to be changed
+*/
+const mutationProductUpdate = async (productId, title, description) => {
+  const mutationProductUpdate = gql`
+  mutation productUpdate($input: ProductInput!) {
+    productUpdate(input: $input) {
+      product {
+        id
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+    `;
+
+  const variables = {
+    input: {
+      id: productId,
+      title,
+      bodyHtml: description,
+
+    },
+  };
+
+  try {
+    const data = await request(config.shopify.endpoint, mutationProductUpdate, variables);
     return data;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
