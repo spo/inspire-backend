@@ -8,19 +8,19 @@ const getGoogleShoppingData = require("./getGoogleShoppingData");
  */
 exports.bulkUpdateProducts = functions.https.onRequest(async (req, res) => {
   const minimumStock = req.body.minimumStock;
-  const productList = [];
+  const updatedVariants = [];
   let hasMoreProductsToLoad = true;
   let cursor = null;
 
   // Loop over all products. The products are loaded with paggination.
   while (hasMoreProductsToLoad) {
-    const result = await loopProductsSlice(productList, minimumStock, cursor);
+    const result = await loopProductsSlice(updatedVariants, minimumStock, cursor);
     hasMoreProductsToLoad = result.hasNextPage;
     cursor = result.endCursor;
   }
 
   try {
-    res.status(200).send({data: productList});
+    res.status(200).send({data: updatedVariants});
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
   }
@@ -74,7 +74,7 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
  * Loop over variants slice and update variants
  * @param {object} product Product that includes variants to loop over
  * @param {Array} productList List contains updated variansts
- * @return {object } asdf
+  * @return {Array } All updated variants
  */
 async function loopProductVariantsSlice(product, productList) {
   // Loop over variants
@@ -118,9 +118,9 @@ async function loopProductVariantsSlice(product, productList) {
 
 /**
  * Add image to product variant
- * @param {*} product
- * @param {*} variant
- * @param {*} googleShoppingMedia
+ * @param {*} product Product that includes variants
+ * @param {*} variant Variants to add images
+ * @param {*} googleShoppingMedia Media such as iamges from google shopping
  * @return {object} The variant object
  */
 async function addImageToProductVariant(product, variant, googleShoppingMedia) {
