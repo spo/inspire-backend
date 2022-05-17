@@ -174,7 +174,7 @@ async function addImageToProductVariant(product, variant, googleShoppingMedia) {
   // Poll each sec until media is ready
   const resultProductVariantAppendMedia = await pollProductVariantAppendMedia(() => productVariantAppendMedia(product.id, variant.id, mediaId), "NON_READY_MEDIA", 1000);
 
-  if (resultProductVariantAppendMedia.userErrors && resultProductVariantAppendMedia.userErrors.length > 0 ) {
+  if (resultProductVariantAppendMedia.userErrors && resultProductVariantAppendMedia.userErrors.length > 0) {
     const {code, field, message} = resultProductVariantAppendMedia.userErrors[0];
     functions.logger.info("Could not attach media to variant", variant.id, variant.displayName, code, field, message, {
       structuredData: true,
@@ -323,7 +323,7 @@ async function mutationProductCreateMedia(originalSource, title, productId) {
  * @param {string} mediaId The product id to attach the image to the right product
 */
 const productVariantAppendMedia = async (productId, variantId, mediaId) => {
-  const mutationProductCreateMedia = gql`
+  const mutationProductVariantAppendMedia = gql`
   mutation ($productId: ID!, $variantMedia: [ProductVariantAppendMediaInput!]!) {
     productVariantAppendMedia(productId: $productId, variantMedia: $variantMedia) {
       product {
@@ -350,7 +350,7 @@ const productVariantAppendMedia = async (productId, variantId, mediaId) => {
   };
 
   try {
-    const data = await request(config.shopify.endpoint, mutationProductCreateMedia, variables);
+    const data = await request(config.shopify.endpoint, mutationProductVariantAppendMedia, variables);
     return data;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
