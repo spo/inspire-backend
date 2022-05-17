@@ -98,95 +98,118 @@ async function loopProductVariantsSlice(product, productList) {
       });
     }
 
+    // add title
+    const resultProductTitleUpdate = await productTitleUpdate(product, googleShoppingData);
+
+    if (resultProductTitleUpdate) {
+      productList.push({
+        title: {
+          productId: resultProductTitleUpdate.productUpdate.product.id,
+          productTitle: resultProductTitleUpdate.productUpdate.product.title,
+        },
+      });
+    }
+
+    // add description
+    const resultProductDescriptionUpdate = await productDescriptionUpdate(product, googleShoppingData);
+
+    if (resultProductDescriptionUpdate) {
+      productList.push({
+        description: {
+          productId: resultProductDescriptionUpdate.productUpdate.product.id,
+          productTitle: resultProductDescriptionUpdate.productUpdate.product.title,
+        },
+      });
+    }
+
     // add image
     const resultAddImageToProductVariant = await addImageToProductVariant(product, variant, googleShoppingData);
 
     if (resultAddImageToProductVariant) {
       productList.push({
-        variantId: resultAddImageToProductVariant.id,
-        variantDisplayName: resultAddImageToProductVariant.displayName,
+        image: {
+          variantId: resultAddImageToProductVariant.id,
+          variantDisplayName: resultAddImageToProductVariant.displayName,
+        },
       });
     }
-
-
-    // TODO: hier if... add description
-    // console.log("description", description);s
   }
 
   return productList;
 }
 
 /**
- * Add image to product variant
- * @param {object} product Product that includes variants
- * @param {object} variant Variants to add images
- * @param {object} googleShoppingData Media such as iamges from google shopping
- * @return {object} The variant object
+ * Add description to product variant
+ * @param {object} product Product to be updated
+ * @param {object} googleShoppingData Google Shopping product information
+ * @return {object} The product object
  */
-async function addDescriptionToProduct(product, variant, googleShoppingData) {
-  // Skip variants with existing images
-  if (variant.image ) {
-    functions.logger.warn("Variant has existing images already", variant.id, variant.displayName, {
+async function productDescriptionUpdate(product, googleShoppingData) {
+  // Skip variants with existing description
+  if (product.bodyHtml) {
+    functions.logger.warn("Product already has a description", product.id, product.title, {
       structuredData: true,
     });
     return;
   }
 
-  const {media, error} = googleShoppingData.product_results;
+  const {description, error} = googleShoppingData.product_results;
 
-  // Skip if no google shopping media data
+  // Skip if no google shopping data
   if (error) {
-    functions.logger.warn("No google shopping media data for", variant.id, variant.displayName, error, {
+    functions.logger.warn("No google shopping information for", product.id, product.title, error, {
       structuredData: true,
     });
     return;
   }
 
-  // Use alwasy first image from google shopping result
-  const medium = media[0];
+  const resultProductUpdate = await mutationProductUpdate(product.id, "", description);
+  return resultProductUpdate;
+}
 
-  // Skip non image types
-  if (!medium.type === "image") {
-    functions.logger.warn("No image type for variant", variant.id, variant.displayName, {
+/**
+ * Add description to product variant
+ * @param {object} product Product to be updated
+ * @param {object} googleShoppingData Google Shopping product information
+ * @return {object} The product object
+ */
+async function productTitleUpdate(product, googleShoppingData) {
+  // Skip variants without privateMetafield
+  if (!product.privateMetafield) {
+    functions.logger.warn("Product title could not be updated because no privateMetafield exists", product.id, product.title, {
       structuredData: true,
     });
     return;
   }
 
-  const resultProductCreateMedia = await mutationProductCreateMedia(medium.link, product.title, product.id);
-
-  const {productCreateMedia} = resultProductCreateMedia;
-  const {code, field, message} = productCreateMedia.mediaUserErrors;
-
-  if (productCreateMedia.mediaUserErrors.length > 0 ) {
-    functions.logger.info("Could not create media for variant", variant.id, variant.displayName, code, field, message, {
+  // Skip variants without privateMetafield value
+  if (!product.privateMetafield.value) {
+    functions.logger.warn("Product title could not be updated because no privateMetafield with value exists", product.id, product.title, {
       structuredData: true,
     });
     return;
-  } else {
-    functions.logger.info("Create media for variant", variant.id, variant.displayName, {
-      structuredData: true,
-    });
   }
 
-  const mediaId = productCreateMedia.media[0].id;
-
-  // Poll each sec until media is ready
-  const resultProductVariantAppendMedia = await pollProductVariantAppendMedia(() => mutationProductVariantAppendMedia(product.id, variant.id, mediaId), "NON_READY_MEDIA", 1000);
-
-  if (resultProductVariantAppendMedia.userErrors && resultProductVariantAppendMedia.userErrors.length > 0) {
-    const {code, field, message} = resultProductVariantAppendMedia.userErrors[0];
-    functions.logger.info("Could not attach media to variant", variant.id, variant.displayName, code, field, message, {
+  // Skip variants that already has been initialised
+  if (product.privateMetafield.value === "true") {
+    functions.logger.warn("Product title has already been initialised", product.id, product.title, {
       structuredData: true,
     });
     return;
-  } else {
-    functions.logger.log("Attach media to variant", variant.id, variant.displayName, {
+  }
+
+  const {title, error} = googleShoppingData.product_results;
+
+  // Skip if no google shopping data
+  if (error) {
+    functions.logger.warn("No google shopping information for", product.id, product.title, error, {
       structuredData: true,
     });
-
-    return variant;
+    return;
   }
+
+  const resultProductUpdate = await mutationProductUpdate(product.id, title, "");
+  return resultProductUpdate;
 }
 
 /**
@@ -308,8 +331,13 @@ async function queryProductsSlice(cursor) {
       nodes {
         id
         title
+        bodyHtml
         totalInventory
         totalVariants
+        privateMetafield(key: "title_inizialised", namespace: "title") {
+          value
+          valueType
+        }
         variants(first: 100) {
           nodes {
             id
@@ -442,6 +470,8 @@ const mutationProductUpdate = async (productId, title, description) => {
     productUpdate(input: $input) {
       product {
         id
+        title
+        bodyHtml
       }
       userErrors {
         field
@@ -451,14 +481,32 @@ const mutationProductUpdate = async (productId, title, description) => {
   }
     `;
 
-  const variables = {
-    input: {
-      id: productId,
-      title,
-      bodyHtml: description,
+  let variables = {};
 
-    },
-  };
+  if (title && description) {
+    variables = {
+      input: {
+        id: productId,
+        title,
+        bodyHtml: description,
+      },
+    };
+  } else if (title) {
+    variables = {
+      input: {
+        id: productId,
+        title,
+      },
+    };
+  } else if (description) {
+    variables = {
+      input: {
+        id: productId,
+        bodyHtml: description,
+      },
+    };
+  }
+
 
   try {
     const data = await request(config.shopify.endpoint, mutationProductUpdate, variables);
