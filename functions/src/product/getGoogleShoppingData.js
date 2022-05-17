@@ -3,11 +3,18 @@ const fetch = require("node-fetch");
 const functions = require("firebase-functions");
 require("dotenv").config();
 
-const {SERPAPI_API_KEY, SERPAPI_URL, SERPAPI_GOOGLE_DOMAIN_DE, SERPAPI_LOCATION} = process.env;
 
 // eslint-disable-next-line max-len
 // TODO: rename loadGoogleShoppingData
-exports.scrapProductData = async (productId, ean) => {
+/**
+ *
+ * @param {*} productId
+ * @param {*} ean
+ * @return {object} google shopping data
+ */
+exports.getGoogleShoppingData = async function(productId, ean) {
+  const {SERPAPI_API_KEY, SERPAPI_URL, SERPAPI_GOOGLE_DOMAIN_DE, SERPAPI_LOCATION} = process.env;
+
   // get google product id
   const urlSearch = SERPAPI_URL;
   const paramsSearch = new URLSearchParams({
