@@ -145,8 +145,17 @@ async function loopProductVariantsSlice(product, productList) {
  * @return {object} The product object
  */
 async function productDescriptionUpdate(product, googleShoppingData) {
+  const resultProductDescription = await queryProductDescription(product.id);
+
   // Skip variants with existing description
-  if (product.bodyHtml) {
+  if (resultProductDescription.product == null) {
+    functions.logger.warn("Could not load product description for", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  if (resultProductDescription.product.bodyHtml) {
     functions.logger.warn("Product already has a description", product.id, product.title, {
       structuredData: true,
     });
@@ -164,6 +173,12 @@ async function productDescriptionUpdate(product, googleShoppingData) {
   }
 
   const resultProductUpdate = await mutationProductUpdate(product.id, "", description);
+
+
+  functions.logger.info("Updated product description for", resultProductUpdate.productUpdate.product.id, resultProductUpdate.productUpdate.product.title, {
+    structuredData: true,
+  });
+
   return resultProductUpdate;
 }
 
@@ -208,7 +223,13 @@ async function productTitleUpdate(product, googleShoppingData) {
     return;
   }
 
+
   const resultProductUpdate = await mutationProductUpdate(product.id, title, "");
+
+  functions.logger.info("Updated product title for", resultProductUpdate.productUpdate.product.id, resultProductUpdate.productUpdate.product.title, {
+    structuredData: true,
+  });
+
   return resultProductUpdate;
 }
 
@@ -331,7 +352,6 @@ async function queryProductsSlice(cursor) {
       nodes {
         id
         title
-        bodyHtml
         totalInventory
         totalVariants
         privateMetafield(key: "title_inizialised", namespace: "title") {
@@ -364,6 +384,32 @@ async function queryProductsSlice(cursor) {
 
   try {
     const productSlice = await request(config.shopify.endpoint, queryProductsSlice, variables);
+    return productSlice;
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message, error.field);
+  }
+}
+
+/**
+ * Get product description by id
+ * @param {string} productId The product id
+ * @return {object} Product object with description
+ */
+async function queryProductDescription(productId) {
+  const queryProductDescription = gql`
+  query($id: ID!) {
+    product(id: $id) {
+      bodyHtml
+    }
+  }
+    `;
+
+  const variables = {
+    id: productId,
+  };
+
+  try {
+    const productSlice = await request(config.shopify.endpoint, queryProductDescription, variables);
     return productSlice;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
