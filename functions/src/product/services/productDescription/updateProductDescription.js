@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
-const {mutationProductUpdate} = require("../mutationProductUpdate");
-const {queryProductDescription} = require("../../query/queryProductDescription");
+const {mutationProductUpdate} = require("../../api/product/mutationProductUpdate");
+const {queryProductDescription} = require("../../api/product/queryProductDescription");
 
 /**
  * Add description to product variant

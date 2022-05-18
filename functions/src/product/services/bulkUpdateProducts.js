@@ -1,8 +1,8 @@
 const functions = require("firebase-functions");
 const {gql, request} = require("graphql-request");
-const config = require("../../../config");
+const config = require("../config/config");
 const getGoogleShoppingData = require("../getGoogleShoppingData");
-const {updateProductTitle} = require("././productTitle/updateProductTitle");
+const {updateProductTitle} = require("./productTitle/updateProductTitle");
 const {updateProductDescription} = require("./productDescription/updateProductDescription");
 
 /**

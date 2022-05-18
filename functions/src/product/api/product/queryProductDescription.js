@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const {gql, request} = require("graphql-request");
-const config = require("../../../config");
+const config = require("../../config/config");
 
 /**
  * Get product description by id
