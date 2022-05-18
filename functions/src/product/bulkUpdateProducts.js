@@ -230,6 +230,8 @@ async function productTitleUpdate(product, googleShoppingData) {
     structuredData: true,
   });
 
+  await mutationProductUpdateTitleInizialised(product.id, "true");
+
   return resultProductUpdate;
 }
 
@@ -552,6 +554,58 @@ const mutationProductUpdate = async (productId, title, description) => {
       },
     };
   }
+
+
+  try {
+    const data = await request(config.shopify.endpoint, mutationProductUpdate, variables);
+    return data;
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
+  }
+};
+
+/**
+ * Update title inizialised status. Is the title inizialised true, the title will not longer override by for example google shopping
+ * @param {string} productId The product id to be updated
+ * @param {string} value The privateMetafields value
+*/
+const mutationProductUpdateTitleInizialised = async (productId, value) => {
+  const mutationProductUpdate = gql`
+  mutation productUpdate($input: ProductInput!) {
+    productUpdate(input: $input) {
+      product {
+        id
+         privateMetafields(first: 10) {
+          nodes {
+            value
+            valueType
+            namespace
+          }
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+    `;
+
+  const variables = {
+    input: {
+      id: productId,
+      privateMetafields: [
+        {
+          key: "title_inizialised",
+          namespace: "title",
+          valueInput: {
+            value,
+            valueType: "STRING",
+          },
+        },
+      ],
+    },
+  };
 
 
   try {
