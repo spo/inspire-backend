@@ -3,7 +3,7 @@ const {gql, request} = require("graphql-request");
 const config = require("../../../config");
 const getGoogleShoppingData = require("../getGoogleShoppingData");
 const {updateProductTitle} = require("././productTitle/updateProductTitle");
-const mutationProductUpdate = require("././productTitle/mutationProductUpdate");
+const {updateProductDescription} = require("./productDescription/updateProductDescription");
 
 /**
  * Update title, description, images for all products including variants.
@@ -102,25 +102,25 @@ async function loopProductVariantsSlice(product, productList) {
     }
 
     // add title
-    const resultProductTitleUpdate = await updateProductTitle(product, googleShoppingData);
+    const resultProductTitle = await updateProductTitle(product, googleShoppingData);
 
-    if (resultProductTitleUpdate) {
+    if (resultProductTitle) {
       productList.push({
         title: {
-          productId: resultProductTitleUpdate.productUpdate.product.id,
-          productTitle: resultProductTitleUpdate.productUpdate.product.title,
+          productId: resultProductTitle.productUpdate.product.id,
+          productTitle: resultProductTitle.productUpdate.product.title,
         },
       });
     }
 
     // add description
-    const resultProductDescriptionUpdate = await productDescriptionUpdate(product, googleShoppingData);
+    const resultProductDescription = await updateProductDescription(product, googleShoppingData);
 
-    if (resultProductDescriptionUpdate) {
+    if (resultProductDescription) {
       productList.push({
         description: {
-          productId: resultProductDescriptionUpdate.productUpdate.product.id,
-          productTitle: resultProductDescriptionUpdate.productUpdate.product.title,
+          productId: resultProductDescription.productUpdate.product.id,
+          productTitle: resultProductDescription.productUpdate.product.title,
         },
       });
     }
@@ -139,50 +139,6 @@ async function loopProductVariantsSlice(product, productList) {
   }
 
   return productList;
-}
-
-/**
- * Add description to product variant
- * @param {object} product Product to be updated
- * @param {object} googleShoppingData Google Shopping product information
- * @return {object} The product object
- */
-async function productDescriptionUpdate(product, googleShoppingData) {
-  const resultProductDescription = await queryProductDescription(product.id);
-
-  // Skip variants with existing description
-  if (resultProductDescription.product == null) {
-    functions.logger.warn("Could not load product description for", product.id, product.title, {
-      structuredData: true,
-    });
-    return;
-  }
-
-  if (resultProductDescription.product.bodyHtml) {
-    functions.logger.warn("Product already has a description", product.id, product.title, {
-      structuredData: true,
-    });
-    return;
-  }
-
-  const {description, error} = googleShoppingData.product_results;
-
-  // Skip if no google shopping data
-  if (error) {
-    functions.logger.warn("No google shopping information for", product.id, product.title, error, {
-      structuredData: true,
-    });
-    return;
-  }
-
-  const resultProductUpdate = await mutationProductUpdate(product.id, "", description);
-
-
-  functions.logger.info("Updated product description for", resultProductUpdate.productUpdate.product.id, resultProductUpdate.productUpdate.product.title, {
-    structuredData: true,
-  });
-
-  return resultProductUpdate;
 }
 
 
@@ -343,31 +299,6 @@ async function queryProductsSlice(cursor) {
   }
 }
 
-/**
- * Get product description by id
- * @param {string} productId The product id
- * @return {object} Product object with description
- */
-async function queryProductDescription(productId) {
-  const queryProductDescription = gql`
-  query($id: ID!) {
-    product(id: $id) {
-      bodyHtml
-    }
-  }
-    `;
-
-  const variables = {
-    id: productId,
-  };
-
-  try {
-    const productSlice = await request(config.shopify.endpoint, queryProductDescription, variables);
-    return productSlice;
-  } catch (error) {
-    throw new functions.https.HttpsError("internal", error.message, error.field);
-  }
-}
 
 /**
  * Add media to product

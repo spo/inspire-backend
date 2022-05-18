@@ -1,7 +1,7 @@
 const functions = require("firebase-functions");
 const {gql, request} = require("graphql-request");
 const config = require("../../../../config");
-const {mutationProductUpdate} = require("./mutationProductUpdate");
+const {mutationProductUpdate} = require("../mutationProductUpdate");
 
 /**
  * Add description to product variant

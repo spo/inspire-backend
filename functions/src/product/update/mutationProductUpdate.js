@@ -1,5 +1,5 @@
 const {gql, request} = require("graphql-request");
-const config = require("../../../../config");
+const config = require("../../../config");
 
 /**
  * Attach media to product variant
