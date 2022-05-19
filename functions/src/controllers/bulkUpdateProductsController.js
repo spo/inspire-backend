@@ -7,20 +7,24 @@ const {productsSlice} = require("../services/graphQl/product/query/productsSlice
  * Update title, description, images for all products including variants.
  * @param {number} minimumStock Minimum required stock in order to update product
  */
-exports.bulkUpdateProducts = async (minimumStock) => {
-  const updatedVariants = [];
+exports.bulkUpdateProducts = async (minimumStock = 0) => {
+  const productList = [];
   let hasMoreProductsToLoad = true;
   let cursor = null;
+
+  if (!Number.isInteger(minimumStock)) {
+    throw new functions.https.HttpsError("invalidArgument", "Minimum stock must be an integer");
+  }
 
   try {
     // Loop over all products. The products are loaded with paggination.
     while (hasMoreProductsToLoad) {
-      const result = await loopProductsSlice(updatedVariants, minimumStock, cursor);
+      const result = await loopProductsSlice(productList, minimumStock, cursor);
       hasMoreProductsToLoad = result.hasNextPage;
       cursor = result.endCursor;
     }
 
-    return updatedVariants;
+    return productList;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
   }
@@ -29,7 +33,7 @@ exports.bulkUpdateProducts = async (minimumStock) => {
 /**
  * Loop over all products
  *
- * @param {Array} productList List contains updated variansts
+ * @param {Array} productList List contains updated products/variansts
  * @param {number} minimumStock Minimum required stock in order to update product
  * @param {string} cursor The cursor corresponding to the last node in edges
  */
@@ -74,7 +78,7 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
 /**
  * Loop over variants slice and update variants
  * @param {object} product Product that includes variants to loop over
- * @param {Array} productList List contains updated variansts
+ * @param {Array} productList List contains updated products/variansts
   * @return {Array } All updated variants
  */
 async function loopProductVariantsSlice(product, productList) {
