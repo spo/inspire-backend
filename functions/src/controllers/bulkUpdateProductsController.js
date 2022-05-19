@@ -1,8 +1,8 @@
 const functions = require("firebase-functions");
 const getGoogleShoppingData = require("../services/common/getGoogleShoppingData");
-const {updateProductTitle} = require("../services/product/updateProductTitle");
-const {updateProductDescription} = require("../services/product/updateProductDescription");
-const {addImageToProductVariant} = require("../services/product/bulkUpdateProductsService");
+const {updateProductTitle} = require("../services/product/bulkUpdateProductsService");
+const {updateProductDescription} = require("../services/product/bulkUpdateProductsService");
+const {updateProductImage} = require("../services/product/bulkUpdateProductsService");
 const {productsSlice} = require("../services/graphQl/product/query/productsSlice");
 
 /**
@@ -132,15 +132,14 @@ async function loopProductVariantsSlice(product, productList) {
       });
     }
 
-    //
     // add image
-    const resultAddImageToProductVariant = await addImageToProductVariant(product, variant, googleShoppingData);
+    const resultProductImage = await updateProductImage(product, variant, googleShoppingData.product_results.media);
 
-    if (resultAddImageToProductVariant) {
+    if (resultProductImage) {
       productList.push({
         image: {
-          variantId: resultAddImageToProductVariant.id,
-          variantDisplayName: resultAddImageToProductVariant.displayName,
+          variantId: resultProductImage.id,
+          variantDisplayName: resultProductImage.displayName,
         },
       });
     }
@@ -148,5 +147,3 @@ async function loopProductVariantsSlice(product, productList) {
 
   return productList;
 }
-
-

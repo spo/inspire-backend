@@ -1,15 +1,113 @@
 const functions = require("firebase-functions");
 const {productCreateMedia} = require("../graphQl/product/mutation/productCreateMedia");
 const {productVariantAppendMedia} = require("../graphQl/product/mutation/productVariantAppendMedia");
+const {productDescription} = require("../../services/graphQl/product/query/productDescription");
+const {productUpdate} = require("../graphQl/product/mutation/productUpdate");
+const {productUpdateTitleInizialised} = require("../graphQl/product/mutation/productUpdateTitleInizialised");
+const {wait} = require("../../helper/helper");
+
+/**
+ * Add description to product variant
+ * @param {object} product Product to be updated
+ * @param {string} title Title to be updated
+ * @return {object} The product object
+ */
+exports.updateProductTitle = async (product, title) => {
+  // Skip if no title provided
+  if (title === "") {
+    functions.logger.warn("An empty title cannot be updated", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  // Skip variants without privateMetafield
+  if (!product.privateMetafield) {
+    functions.logger.warn("Product title could not be updated because no privateMetafield exists", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  // Skip variants without privateMetafield value
+  if (!product.privateMetafield.value) {
+    functions.logger.warn("Product title could not be updated because no privateMetafield with value exists", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  // Skip variants that already has been initialised
+  if (product.privateMetafield.value === "true") {
+    functions.logger.warn("Product title has already been initialised", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  const resultProductUpdate = await productUpdate(product.id, title, "");
+
+  if (resultProductUpdate.productUpdate) {
+    functions.logger.info("Updated product title for", resultProductUpdate.productUpdate.product.id, resultProductUpdate.productUpdate.product.title, {
+      structuredData: true,
+    });
+    await productUpdateTitleInizialised(product.id, "true");
+  }
+
+  return resultProductUpdate;
+};
+
+/**
+ * Add description to product variant
+ * @param {object} product Product to be updated
+ * @param {string} description Description to be updated
+ * @return {object} The product object
+ */
+exports.updateProductDescription = async (product, description) => {
+  // Skip if no description provided
+  if (description === "") {
+    functions.logger.warn("An empty description cannot be updated", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  const resultProductDescription = await productDescription(product.id);
+
+  // Skip variants with existing description
+  if (resultProductDescription.product == null) {
+    functions.logger.warn("Could not load product description for", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  if (resultProductDescription.product.bodyHtml) {
+    functions.logger.warn("Product already has a description", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  const resultProductUpdate = await productUpdate(product.id, "", description);
+
+
+  functions.logger.info("Updated product description for", resultProductUpdate.productUpdate.product.id, resultProductUpdate.productUpdate.product.title, {
+    structuredData: true,
+  });
+
+  return resultProductUpdate;
+};
+
 
 /**
  * Add image to product variant
  * @param {object} product Product that includes variants
  * @param {object} variant Variants to add images
- * @param {object} googleShoppingData Product information from google shopping
+ * @param {object} media Media such as images
  * @return {object} The variant object
  */
-exports.addImageToProductVariant= async (product, variant, googleShoppingData) => {
+exports.updateProductImage= async (product, variant, media) => {
   // Skip variants with existing images
   if (variant.image ) {
     functions.logger.warn("Variant has existing images already", variant.id, variant.displayName, {
@@ -18,11 +116,9 @@ exports.addImageToProductVariant= async (product, variant, googleShoppingData) =
     return;
   }
 
-  const {media, error} = googleShoppingData.product_results;
-
   // Skip if no google shopping media data
-  if (error) {
-    functions.logger.warn("No google shopping media data for", variant.id, variant.displayName, error, {
+  if (!media) {
+    functions.logger.warn("No media data for", variant.id, variant.displayName, {
       structuredData: true,
     });
     return;
@@ -96,15 +192,4 @@ const pollProductVariantAppendMedia = async function(fn, fnCondition, ms) {
     }
   }
   return result;
-};
-
-/**
-   * Wait for a given time
-   * @param {number} ms How many milliseconds to wait
-   * @return {Promise} The promise when timer has expired
-   */
-const wait = function(ms = 1000) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 };

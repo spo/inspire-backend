@@ -1,11 +1,7 @@
-/* eslint-disable max-len */
 const fetch = require("node-fetch");
 const functions = require("firebase-functions");
 require("dotenv").config();
 
-
-// eslint-disable-next-line max-len
-// TODO: rename loadGoogleShoppingData
 /**
  *
  * @param {*} productId
