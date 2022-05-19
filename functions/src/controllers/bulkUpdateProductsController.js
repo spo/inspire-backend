@@ -1,32 +1,33 @@
 const functions = require("firebase-functions");
 const {gql, request} = require("graphql-request");
 const config = require("../config/config");
-const getGoogleShoppingData = require("../getGoogleShoppingData");
-const {updateProductTitle} = require("./productTitle/updateProductTitle");
-const {updateProductDescription} = require("./productDescription/updateProductDescription");
+const getGoogleShoppingData = require("../services/common/getGoogleShoppingData");
+const {updateProductTitle} = require("../services/product/updateProductTitle");
+const {updateProductDescription} = require("../services/product/updateProductDescription");
 
 /**
  * Update title, description, images for all products including variants.
+ * @param {number} minimumStock Minimum required stock in order to update product
  */
-exports.bulkUpdateProducts = functions.https.onRequest(async (req, res) => {
-  const minimumStock = req.body.minimumStock;
+exports.bulkUpdateProducts = async (minimumStock) => {
   const updatedVariants = [];
   let hasMoreProductsToLoad = true;
   let cursor = null;
 
-  // Loop over all products. The products are loaded with paggination.
-  while (hasMoreProductsToLoad) {
-    const result = await loopProductsSlice(updatedVariants, minimumStock, cursor);
-    hasMoreProductsToLoad = result.hasNextPage;
-    cursor = result.endCursor;
-  }
-
   try {
-    res.status(200).send({data: updatedVariants});
+    // Loop over all products. The products are loaded with paggination.
+    while (hasMoreProductsToLoad) {
+      const result = await loopProductsSlice(updatedVariants, minimumStock, cursor);
+      hasMoreProductsToLoad = result.hasNextPage;
+      cursor = result.endCursor;
+    }
+
+    return updatedVariants;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
   }
-});
+};
+
 
 /**
  * Loop over all products
@@ -141,7 +142,7 @@ async function loopProductVariantsSlice(product, productList) {
   return productList;
 }
 
-
+// TODO: move to services
 /**
  * Add image to product variant
  * @param {object} product Product that includes variants

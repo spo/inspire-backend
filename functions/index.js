@@ -1,5 +1,4 @@
-// TODO: update all imports with -> {}
-const bulkUpdateProducts = require("./src/product/services/bulkUpdateProducts");
+const {bulkUpdateProducts} = require("./src/api/bulkUpdateProducts");
 
 // functions
-exports.bulkUpdateProducts = bulkUpdateProducts.bulkUpdateProducts;
+exports.bulkUpdateProducts = bulkUpdateProducts;
