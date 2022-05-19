@@ -3,12 +3,15 @@
   "description": "Cloud Functions for Firebase",
   "scripts": {
     "lint": "eslint .",
-    "serve": "firebase emulators:start --only functions",
+    "serve": "firebase emulators:start --only functions", 
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "stop": "lsof -t -i :5001 -i:8080 | xargs kill -9"
+    "stop": "lsof -t -i :5001 -i:5002 | xargs kill -9"
+  },
+  "scriptsComments": {
+    "serve": "debugging -> https://fredriccliver.medium.com/firebase-functions-debugging-in-local-vscode-ce6a1d24bb3b"
   },
   "engines": {
     "node": "16"
@@ -18,7 +21,7 @@
     "@types/node": "^17.0.31",
     "dotenv": "^16.0.0",
     "firebase-admin": "^10.0.2",
-    "firebase-functions": "^3.18.0",
+    "firebase-functions": "^3.21.0",
     "graphql": "^16.4.0",
     "graphql-request": "^4.2.0",
     "node-fetch": "^2.6.7",

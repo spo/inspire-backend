@@ -1,7 +1,4 @@
-const scrapeProductData = require("./src/scrapeProductData");
-const createProduct = require("./src/product/createProduct");
-
+const {bulkUpdateProducts} = require("./src/api/bulkUpdateProducts");
 
 // functions
-exports.scrapProductData = scrapeProductData.scrapProductData;
-exports.createProduct = createProduct.createProduct;
+exports.bulkUpdateProducts = bulkUpdateProducts;
