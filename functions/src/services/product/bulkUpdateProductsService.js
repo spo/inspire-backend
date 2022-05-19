@@ -14,8 +14,24 @@ const {wait} = require("../../utils/wait");
  */
 exports.updateProductTitle = async (product, title) => {
   // Skip if no title provided
+  if (!title) {
+    functions.logger.warn("No title provided", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  // Skip if title is empty
   if (title === "") {
     functions.logger.warn("An empty title cannot be updated", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  // Skip if no product id provided
+  if (!product.id) {
+    functions.logger.warn("No product id provided", product.id, product.title, {
       structuredData: true,
     });
     return;
@@ -61,12 +77,20 @@ exports.updateProductTitle = async (product, title) => {
  * Add description to product variant
  * @param {object} product Product to be updated
  * @param {string} description Description to be updated
- * @return {object} The product object
+ * @return {object} The updated product object
  */
 exports.updateProductDescription = async (product, description) => {
   // Skip if no description provided
   if (description === "") {
     functions.logger.warn("An empty description cannot be updated", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  // Skip if no product id provided
+  if (!product.id) {
+    functions.logger.warn("No product id provided", product.id, product.title, {
       structuredData: true,
     });
     return;
@@ -108,8 +132,16 @@ exports.updateProductDescription = async (product, description) => {
  * @return {object} The variant object
  */
 exports.updateProductImage= async (product, variant, media) => {
+  // Skip if no product id provided
+  if (!product.id) {
+    functions.logger.warn("No product id provided", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
   // Skip variants with existing images
-  if (variant.image ) {
+  if (variant.image) {
     functions.logger.warn("Variant has existing images already", variant.id, variant.displayName, {
       structuredData: true,
     });
@@ -118,7 +150,7 @@ exports.updateProductImage= async (product, variant, media) => {
 
   // Skip if no google shopping media data
   if (!media) {
-    functions.logger.warn("No media data for", variant.id, variant.displayName, {
+    functions.logger.warn("No google shopping media data for", variant.id, variant.displayName, {
       structuredData: true,
     });
     return;

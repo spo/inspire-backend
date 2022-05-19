@@ -63,7 +63,7 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
 
     // Skip when product has no given minium stock
     if (!product.totalInventory > minimumStock) {
-      functions.logger.warn("No stock for product", product.id, product.title, {
+      functions.logger.warn("Not given minimum stock for product", product.id, product.title, minimumStock, {
         structuredData: true,
       });
       continue;
