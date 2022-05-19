@@ -95,15 +95,22 @@ async function loopProductVariantsSlice(product, productList) {
 
     const googleShoppingData = await getGoogleShoppingData.getGoogleShoppingData(product.id, variant.barcode);
 
-    // skip variant if there is no google shopping data for the variant
+    // skip variant if Google Shopping data could not be loaded
     if (!googleShoppingData && !googleShoppingData.product_results) {
-      functions.logger.warn("No google shopping data for", variant.id, variant.displayName, googleShoppingData.error, {
+      functions.logger.warn("Could not load google shopping data for", variant.id, variant.displayName, googleShoppingData.error, {
+        structuredData: true,
+      });
+    }
+
+    // skip variant if there is no google shopping data for the variant
+    if (googleShoppingData.product_results.error) {
+      functions.logger.warn("No google shopping data for", variant.id, variant.displayName, googleShoppingData.product_results.error, {
         structuredData: true,
       });
     }
 
     // add title
-    const resultProductTitle = await updateProductTitle(product, googleShoppingData);
+    const resultProductTitle = await updateProductTitle(product, googleShoppingData.product_results.title);
 
     if (resultProductTitle) {
       productList.push({
@@ -115,7 +122,7 @@ async function loopProductVariantsSlice(product, productList) {
     }
 
     // add description
-    const resultProductDescription = await updateProductDescription(product, googleShoppingData);
+    const resultProductDescription = await updateProductDescription(product, googleShoppingData.product_results.description);
 
     if (resultProductDescription) {
       productList.push({

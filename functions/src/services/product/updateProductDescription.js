@@ -1,15 +1,24 @@
 const functions = require("firebase-functions");
-const {mutationProductUpdate} = require("../graphQl/product/mutationProductUpdate");
-const {queryProductDescription} = require("../graphQl/product/queryProductDescription");
+const {productUpdate} = require("../graphQl/product/mutation/productUpdate");
+const {productDescription} = require("../../services/graphQl/product/query/productDescription");
 
+// TODO: nur productId, productTitle übergeben, statt gesamtes product
 /**
  * Add description to product variant
  * @param {object} product Product to be updated
- * @param {object} googleShoppingData Google Shopping product information
+ * @param {string} description Description to be updated
  * @return {object} The product object
  */
-exports.updateProductDescription = async (product, googleShoppingData) => {
-  const resultProductDescription = await queryProductDescription(product.id);
+exports.updateProductDescription = async (product, description) => {
+// Skip if no description provided
+  if (description === "") {
+    functions.logger.warn("An empty description cannot be updated", product.id, product.title, {
+      structuredData: true,
+    });
+    return;
+  }
+
+  const resultProductDescription = await productDescription(product.id);
 
   // Skip variants with existing description
   if (resultProductDescription.product == null) {
@@ -26,17 +35,7 @@ exports.updateProductDescription = async (product, googleShoppingData) => {
     return;
   }
 
-  const {description, error} = googleShoppingData.product_results;
-
-  // Skip if no google shopping data
-  if (error) {
-    functions.logger.warn("No google shopping information for", product.id, product.title, error, {
-      structuredData: true,
-    });
-    return;
-  }
-
-  const resultProductUpdate = await mutationProductUpdate(product.id, "", description);
+  const resultProductUpdate = await productUpdate(product.id, "", description);
 
 
   functions.logger.info("Updated product description for", resultProductUpdate.productUpdate.product.id, resultProductUpdate.productUpdate.product.title, {

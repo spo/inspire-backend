@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const {gql, request} = require("graphql-request");
-const config = require("../../../config/config");
+const config = require("../../../../config/config");
 
 /**
  * Attach media to product variant
@@ -8,8 +8,8 @@ const config = require("../../../config/config");
  * @param {string} title Title to be changed
  * @param {string} description Description to be changed
 */
-exports.mutationProductUpdate = async (productId, title, description) => {
-  const mutationProductUpdate = gql`
+exports.productUpdate = async (productId, title, description) => {
+  const productUpdate = gql`
     mutation productUpdate($input: ProductInput!) {
       productUpdate(input: $input) {
         product {
@@ -53,7 +53,7 @@ exports.mutationProductUpdate = async (productId, title, description) => {
 
 
   try {
-    const data = await request(config.shopify.endpoint, mutationProductUpdate, variables);
+    const data = await request(config.shopify.endpoint, productUpdate, variables);
     return data;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
