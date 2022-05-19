@@ -1,8 +1,6 @@
 const functions = require("firebase-functions");
 const getGoogleShoppingData = require("../services/common/getGoogleShoppingData");
-const {updateProductTitle} = require("../services/product/bulkUpdateProductsService");
-const {updateProductDescription} = require("../services/product/bulkUpdateProductsService");
-const {updateProductImage} = require("../services/product/bulkUpdateProductsService");
+const {bulkUpdateProductsService} = require("../services");
 const {productsSlice} = require("../services/graphQl/product/query/productsSlice");
 
 /**
@@ -109,7 +107,7 @@ async function loopProductVariantsSlice(product, productList) {
     }
 
     // add title
-    const resultProductTitle = await updateProductTitle(product, googleShoppingData.product_results.title);
+    const resultProductTitle = await bulkUpdateProductsService.updateProductTitle(product, googleShoppingData.product_results.title);
 
     if (resultProductTitle) {
       productList.push({
@@ -121,7 +119,7 @@ async function loopProductVariantsSlice(product, productList) {
     }
 
     // add description
-    const resultProductDescription = await updateProductDescription(product, googleShoppingData.product_results.description);
+    const resultProductDescription = await bulkUpdateProductsService.updateProductDescription(product, googleShoppingData.product_results.description);
 
     if (resultProductDescription) {
       productList.push({
@@ -133,7 +131,7 @@ async function loopProductVariantsSlice(product, productList) {
     }
 
     // add image
-    const resultProductImage = await updateProductImage(product, variant, googleShoppingData.product_results.media);
+    const resultProductImage = await bulkUpdateProductsService.updateProductImage(product, variant, googleShoppingData.product_results.media);
 
     if (resultProductImage) {
       productList.push({
