@@ -4,7 +4,7 @@ const {productVariantAppendMedia} = require("../graphQl/product/mutation/product
 const {productDescription} = require("../../services/graphQl/product/query/productDescription");
 const {productUpdate} = require("../graphQl/product/mutation/productUpdate");
 const {productUpdateTitleInizialised} = require("../graphQl/product/mutation/productUpdateTitleInizialised");
-const {wait} = require("../../helper/helper");
+const {wait} = require("../../utils/wait");
 
 /**
  * Add description to product variant
