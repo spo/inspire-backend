@@ -6,6 +6,7 @@ const {
   HOST_SHOPIFY,
   API_VERSION_SHOPIFY} = process.env;
 
+// TODO: remove location
 // TODO: use shopify node lib
 module.exports = {
   shopify: {

@@ -1,5 +1,5 @@
 const functions = require("firebase-functions");
-const getGoogleShoppingData = require("../services/common/getGoogleShoppingData");
+const getGoogleShoppingData = require("../services/common/getGoogleShoppingData"); // TODO: use {}
 const {bulkUpdateProductsService} = require("../services");
 const {productsSlice} = require("../services/graphQl/product/query/productsSlice");
 
