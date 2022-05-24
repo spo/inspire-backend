@@ -1,7 +1,7 @@
-const {getBSStockData} = require("../services/common/getBSData");
+const {bulkImportProducts} = require("../services/product/bulkImportProductsService");
 
 exports.bulkImportProducts = async () => {
-  const BSStockData = getBSStockData();
+  const importedProducts = await bulkImportProducts();
 
-  console.log(BSStockData);
+  return importedProducts;
 };

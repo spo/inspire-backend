@@ -6,7 +6,7 @@ require("dotenv").config();
  * Get BS product feed
  * @return {object} Product feed
  */
-exports.getBSStockData = async function() {
+exports.getBsProducts = async function() {
   const {BS_API_URL, BS_API_KEY} = process.env;
 
   const urlSearch = BS_API_URL;
@@ -23,7 +23,13 @@ exports.getBSStockData = async function() {
     });
   }
 
-  return productFeed;
+  if (!productFeed.products) {
+    functions.logger.info("Could not load BS products", productFeed, {
+      structuredData: true,
+    });
+  }
+
+  return productFeed.products;
 };
 
 

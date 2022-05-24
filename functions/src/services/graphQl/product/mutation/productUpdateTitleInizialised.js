@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const {gql, request} = require("graphql-request");
-const config = require("../../../../config/config");
+const {shopify} = require("../../../../config/config");
 
 /**
  * Update title inizialised status. Is the title inizialised true, the title will not longer override by for example google shopping
@@ -34,8 +34,8 @@ exports.productUpdateTitleInizialised = async (productId, value) => {
       id: productId,
       privateMetafields: [
         {
-          key: "title_inizialised",
-          namespace: "title",
+          key: shopify.privateMetafields.product.bsInizialisedle.key,
+          namespace: shopify.privateMetafields.product.bsInizialisedle.namespace,
           valueInput: {
             value,
             valueType: "STRING",
@@ -47,7 +47,7 @@ exports.productUpdateTitleInizialised = async (productId, value) => {
 
 
   try {
-    const data = await request(config.shopify.endpoint, productUpdateTitleInizialised, variables);
+    const data = await request(shopify.endpoint, productUpdateTitleInizialised, variables);
     return data;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);

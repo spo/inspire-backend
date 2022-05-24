@@ -8,6 +8,7 @@ const config = require("../../../../config/config");
  * @return {object} Product slice objects
  */
 exports.productsSlice = async (cursor) => {
+  // TODO: use config.js for privateMetafield -> product_bs_inizialised and product
   const productsSlice = gql`
     query ($numProducts: Int!, $cursor: String) {
       products(first: $numProducts, after: $cursor) {
@@ -16,7 +17,7 @@ exports.productsSlice = async (cursor) => {
           title
           totalInventory
           totalVariants
-          privateMetafield(key: "title_inizialised", namespace: "title") {
+          privateMetafield(key: "product_bs_inizialised", namespace: "product") {
             value
             valueType
           }
