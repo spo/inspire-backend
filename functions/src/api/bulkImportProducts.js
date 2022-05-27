@@ -3,7 +3,7 @@ const {bulkImportProductsController} = require("../controllers");
 
 exports.bulkImportProducts = functions.https.onRequest(async (req, res) => {
   try {
-    const resultBulkImportProducts = await bulkImportProductsController.bulkImportProducts();
+    const resultBulkImportProducts = await bulkImportProductsController.bulkImportProducts(req.body.slice);
 
     res.status(200).send({data: resultBulkImportProducts});
   } catch (error) {

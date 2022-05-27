@@ -1,7 +1,7 @@
 const {bulkImportProducts} = require("../services/product/bulkImportProductsService");
 
-exports.bulkImportProducts = async () => {
-  const importedProducts = await bulkImportProducts();
+exports.bulkImportProducts = async (slice) => {
+  const importedProducts = await bulkImportProducts(slice);
 
   return importedProducts;
 };

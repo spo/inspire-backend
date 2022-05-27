@@ -49,6 +49,7 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
     throw new functions.https.HttpsError("aborted", "No products available", resultProductsSlice);
   }
 
+  // TODO: ggf. durch map ersetzen
   // Loop over products slice
   for (let index = 0; index < totalProducts; index++) {
     const product = products[index];

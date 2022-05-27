@@ -4,6 +4,6 @@
    * @return {number} The selling price
    */
 exports.calculateInitialSellingPrice = (purchasePrice) => {
-  const sellingPrice = purchasePrice*2.5;
+  const sellingPrice = purchasePrice*2.5.toFixed(2);
   return sellingPrice;
 };

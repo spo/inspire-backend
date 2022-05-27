@@ -17,10 +17,14 @@ exports.productVariants = async (cursor) => {
         }
         nodes {
           id
+          barcode
           displayName
           privateMetafield(namespace: $namespace, key: $key) {
             id
             value
+          }
+          product {
+            id
           }
         }
       }
@@ -30,7 +34,7 @@ exports.productVariants = async (cursor) => {
   const variables = {
     namespace: shopify.privateMetafields.product.namespace,
     key: shopify.privateMetafields.product.bsDescription.key,
-    numProducts: 10,
+    numProducts: 3,
     cursor,
   };
 
@@ -38,6 +42,6 @@ exports.productVariants = async (cursor) => {
     const productSlice = await request(shopify.endpoint, productVariants, variables);
     return productSlice;
   } catch (error) {
-    throw new functions.https.HttpsError("internal", error.message, error.field);
+    throw new functions.https.HttpsError("internal", error.message, error.code, error.type);
   }
 };

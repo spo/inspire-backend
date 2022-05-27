@@ -8,13 +8,14 @@ const config = require("../../../../config/config");
  * @return {object} Product variants object
  */
 exports.productVariantsByBarcode = async (barcode) => {
-  const productDescription = gql`
+  const productVariantsByBarcode = gql`
     query ($first: Int!, $query: String) {
       productVariants(first: $first, query: $query) {
         edges {
           node {
             id
-            title
+            displayName
+            barcode
           }
         }
       }
@@ -27,7 +28,7 @@ exports.productVariantsByBarcode = async (barcode) => {
   };
 
   try {
-    const productSlice = await request(config.shopify.endpoint, productDescription, variables);
+    const productSlice = await request(config.shopify.endpoint, productVariantsByBarcode, variables);
     return productSlice;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);

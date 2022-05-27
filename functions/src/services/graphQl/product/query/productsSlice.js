@@ -41,7 +41,7 @@ exports.productsSlice = async (cursor) => {
       `;
 
   const variables = {
-    numProducts: 3,
+    numProducts: 1,
     cursor: cursor,
   };
 
