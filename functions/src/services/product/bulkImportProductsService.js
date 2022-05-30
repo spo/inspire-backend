@@ -4,6 +4,9 @@ const {productVariantsByBarcode} = require("../../services/graphQl/product/query
 const {productVariants} = require("../../services/graphQl/product/query/productVariants");
 const {productCreateBs} = require("../graphQl/product/mutation/productCreate/productCreateBs");
 const {productVariantCreateBs} = require("../graphQl/product/mutation/productCreate/productVariantCreateBs");
+const {calculateApiWaitTime} = require("../../utils/calculateApiWaitTime");
+const {wait} = require("../../utils/wait");
+
 
 // 1) Produkt aus Liste nehmen
 // 2 Prüfen ob Produkt schon vorhanden
@@ -15,7 +18,7 @@ const {productVariantCreateBs} = require("../graphQl/product/mutation/productCre
 // 3) Wenn nein dann produkt anlegen
 // 4) Wenn ja dann Produkt mit allen Varianten anlegen
 
-exports.bulkImportProducts = async (slice= {from: 0}) => {
+exports.bulkImportProducts = async (slice = {from: 0}) => {
   try {
     const importedProducts = [];
     const productsToImport = await getBsProducts();
@@ -39,24 +42,26 @@ const startImport = async (productsToImport, importedProducts) => {
       const productToImport = productsToImport[index];
 
       if (!productToImport) {
-        functions.logger.warn("The product to be imported is not defined", index, {
+        functions.logger.info("The product to be imported is not defined", index, {
           structuredData: true,
         });
         continue;
       }
 
       if (!productToImport.barcode) {
-        functions.logger.warn("The product to be importied does not have a barcode", productToImport.articleNumber, productToImport.description, {
+        functions.logger.info("The product to be importied does not have a barcode", productToImport.articleNumber, productToImport.description, {
           structuredData: true,
         });
         continue;
       }
 
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       const existingProduct = await productVariantsByBarcode(productToImport.barcode);
+      // await calculateApiWaitTime(existingProduct.extensions.cost);
 
       // Skip variants with existing barcode
-      if (existingProduct.productVariants.edges.length > 0) {
-        functions.logger.warn("Variant with barcode already exists", productToImport.articleNumber, productToImport.title, productToImport.barcode, {
+      if (existingProduct.data.productVariants.edges.length > 0) {
+        functions.logger.info("Variant with barcode already exists", productToImport.articleNumber, productToImport.description, productToImport.barcode, {
           structuredData: true,
         });
         continue;
@@ -83,11 +88,14 @@ async function getAllProductVariants() {
 
     // Loop over all existing product variants. The product variants are loaded with paggination.
     while (hasMoreProductsToLoad) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       const resultProductVariants = await productVariants(cursor);
+      // await calculateApiWaitTime(resultProductVariants.extensions.cost);
 
-      hasMoreProductsToLoad = resultProductVariants.productVariants.pageInfo.hasNextPage;
-      cursor = resultProductVariants.productVariants.pageInfo.endCursor;
-      const variants = resultProductVariants.productVariants.nodes;
+
+      hasMoreProductsToLoad = resultProductVariants.data.productVariants.pageInfo.hasNextPage;
+      cursor = resultProductVariants.data.productVariants.pageInfo.endCursor;
+      const variants = resultProductVariants.data.productVariants.nodes;
 
       productVariantList.push(...variants);
     }
@@ -131,7 +139,7 @@ async function createProductVariant(productToImport) {
         return newProduct;
       } else {
         const newVariant = await productCreateBs(productToImport);
-        functions.logger.info("Product created", newVariant.id, newVariant.displayName, {
+        functions.logger.info("Product created", newVariant.id, newVariant.title, {
           structuredData: true,
         });
 
