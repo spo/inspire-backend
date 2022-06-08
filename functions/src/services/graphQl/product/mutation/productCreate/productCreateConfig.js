@@ -1,10 +1,19 @@
+const functions = require("firebase-functions");
 require("dotenv").config();
 const {shopify} = require("../../../../../config/config");
 const {convertGender} = require("../../../../../utils/convertGender");
-const {checkColor} = require("../../../../../utils/checkColor");
+const {checkColor} = require("../../../../../utils/color/checkColor");
 const {convertNumberToStringWithComma} = require("../../../../../utils/convertNumberToStringWithComma");
+const {replaceEmptyString} = require("../../../../../utils/replaceEmptyString");
+
 
 exports.metafields = (product) => {
+  if (!product) {
+    functions.logger.warn("No product available to update the private meta fields ", {
+      structuredData: true,
+    });
+  }
+
   const metafields = [
     {
       key: shopify.privateMetafields.product.bsGender.key,
@@ -43,20 +52,18 @@ exports.metafields = (product) => {
 };
 
 exports.privateMetafields = (product) => {
+  if (!product) {
+    functions.logger.warn("No product available to update the private meta fields ", {
+      structuredData: true,
+    });
+  }
+
   const privateMetafields = [
     {
       key: shopify.privateMetafields.product.bsArticleNumber.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.articleNumber,
-        valueType: "STRING",
-      },
-    },
-    {
-      key: shopify.privateMetafields.product.bsConcern.key,
-      namespace: shopify.privateMetafields.product.namespace,
-      valueInput: {
-        value: product.concern,
+        value: replaceEmptyString(product.articleNumber),
         valueType: "STRING",
       },
     },
@@ -64,7 +71,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsType.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.type,
+        value: replaceEmptyString(product.type),
         valueType: "STRING",
       },
     },
@@ -72,7 +79,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsAssortment.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.assortment,
+        value: replaceEmptyString(product.assortment),
         valueType: "STRING",
       },
     },
@@ -80,7 +87,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsSort.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.sort,
+        value: replaceEmptyString(product.sort),
         valueType: "STRING",
       },
     },
@@ -88,7 +95,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsUsedFor.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.usedFor,
+        value: replaceEmptyString(product.usedFor),
         valueType: "STRING",
       },
     },
@@ -96,7 +103,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsVersion.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.version,
+        value: replaceEmptyString(product.version),
         valueType: "STRING",
       },
     },
@@ -104,15 +111,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsEdition.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.edition,
-        valueType: "STRING",
-      },
-    },
-    {
-      key: shopify.privateMetafields.product.bsStockType.key,
-      namespace: shopify.privateMetafields.product.namespace,
-      valueInput: {
-        value: product.stockType,
+        value: replaceEmptyString(product.edition),
         valueType: "STRING",
       },
     },
@@ -120,7 +119,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsAdditionalProductInformation.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.additionalProductInformation,
+        value: replaceEmptyString(product.additionalProductInformation),
         valueType: "STRING",
       },
     },
@@ -128,7 +127,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsCategory.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.category,
+        value: replaceEmptyString(product.category),
         valueType: "STRING",
       },
     },
@@ -136,39 +135,7 @@ exports.privateMetafields = (product) => {
       key: shopify.privateMetafields.product.bsDescription.key,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
-        value: product.description,
-        valueType: "STRING",
-      },
-    },
-    {
-      key: shopify.privateMetafields.product.bsCategoryDescription.key,
-      namespace: shopify.privateMetafields.product.namespace,
-      valueInput: {
-        value: product.categoryDescription,
-        valueType: "STRING",
-      },
-    },
-    {
-      key: shopify.privateMetafields.product.bsProductDescription.key,
-      namespace: shopify.privateMetafields.product.namespace,
-      valueInput: {
-        value: product.productDescription,
-        valueType: "STRING",
-      },
-    },
-    {
-      key: shopify.privateMetafields.product.bsProductSortDescription.key,
-      namespace: shopify.privateMetafields.product.namespace,
-      valueInput: {
-        value: product.productSortDescription,
-        valueType: "STRING",
-      },
-    },
-    {
-      key: shopify.privateMetafields.product.bsExtendedDescription.key,
-      namespace: shopify.privateMetafields.product.namespace,
-      valueInput: {
-        value: product.extendedDescription,
+        value: replaceEmptyString(product.description),
         valueType: "STRING",
       },
     },

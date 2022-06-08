@@ -6,7 +6,8 @@
 exports.checkColor = (color) => {
   switch (color) {
     case "-":
-      return "";
+    case "":
+      return null;
     default:
       return color;
   }

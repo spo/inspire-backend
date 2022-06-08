@@ -4,6 +4,7 @@ const {productVariantsByBarcode} = require("../../services/graphQl/product/query
 const {productVariants} = require("../../services/graphQl/product/query/productVariants");
 const {productCreateBs} = require("../graphQl/product/mutation/productCreate/productCreateBs");
 const {productVariantCreateBs} = require("../graphQl/product/mutation/productCreate/productVariantCreateBs");
+const {productCreatePrivateMetafields} = require("../graphQl/product/mutation/productCreate/productCreatePrivateMetafields");
 const {calculateApiWaitTime} = require("../../utils/calculateApiWaitTime");
 const {wait} = require("../../utils/wait");
 
@@ -55,7 +56,7 @@ const startImport = async (productsToImport, importedProducts) => {
         continue;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      // await new Promise((resolve) => setTimeout(resolve, 5000));
       const existingProduct = await productVariantsByBarcode(productToImport.barcode);
       // await calculateApiWaitTime(existingProduct.extensions.cost);
 
@@ -67,7 +68,7 @@ const startImport = async (productsToImport, importedProducts) => {
         continue;
       }
 
-      const newProduct = createProductVariant(productToImport);
+      const newProduct = await createProductVariant(productToImport);
       importedProducts.push(newProduct);
     }
 
@@ -76,6 +77,93 @@ const startImport = async (productsToImport, importedProducts) => {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
   }
 };
+
+/**
+ * Create new product variants
+ * @param {Array} productToImport
+ */
+async function createProductVariant(productToImport) {
+  try {
+    let isproductVariant = false;
+    const allProductVariants = await getAllProductVariants();
+
+    // if no product variants exist
+    if (allProductVariants.length == 0) {
+      const newVariant = await productCreateBs(productToImport);
+
+      functions.logger.info("Product variant created", newVariant.id, newVariant.displayName, {
+        structuredData: true,
+      });
+
+      if (newVariant.variants.nodes[0].id) {
+        await productCreatePrivateMetafields(newVariant.variants.nodes[0].id, productToImport);
+      } else {
+        functions.logger.warn("Could not update private meta fields", newVariant.id, newVariant.title, {
+          structuredData: true,
+        });
+      }
+
+      return newVariant;
+    }
+
+    let existingProductVariantProductId = null;
+
+    // Loop over existing products
+    for (let index = 0; index < allProductVariants.length; index++) {
+      const existingProductVariant = allProductVariants[index];
+
+      if (!existingProductVariant.privateMetafield) {
+        functions.logger.info("No BS description", existingProductVariant.id, existingProductVariant.displayName, {
+          structuredData: true,
+        });
+        continue;
+      }
+
+      // If a product with an associated variant already exists, add the new variant to the product.
+      // If not create a new standalone variant
+      if (existingProductVariant.privateMetafield.value === productToImport.description) {
+        isproductVariant = true;
+        existingProductVariantProductId = existingProductVariant.product.id;
+        break;
+      } else {
+        isproductVariant = false;
+      }
+    }
+
+    if (isproductVariant) {
+      const newVariant = await productVariantCreateBs(productToImport, existingProductVariantProductId);
+      functions.logger.info("Product variant created", newVariant.id, newVariant.displayName, {
+        structuredData: true,
+      });
+
+      if (newVariant.id) {
+        await productCreatePrivateMetafields(newVariant.id, productToImport);
+      } else {
+        functions.logger.warn("Could not update private meta fields", newVariant.id, newVariant.title, {
+          structuredData: true,
+        });
+      }
+
+      return newVariant;
+    } else {
+      const newProduct = await productCreateBs(productToImport);
+      functions.logger.info("Product created", newProduct.id, newProduct.title, {
+        structuredData: true,
+      });
+
+      if (newProduct.variants.nodes[0].id) {
+        await productCreatePrivateMetafields(newProduct.variants.nodes[0].id, productToImport);
+      } else {
+        functions.logger.warn("Could not update private meta fields", newProduct.id, newProduct.title, {
+          structuredData: true,
+        });
+      }
+      return newProduct;
+    }
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
+  }
+}
 
 /**
  * Returns all product variants from shopify
@@ -88,7 +176,7 @@ async function getAllProductVariants() {
 
     // Loop over all existing product variants. The product variants are loaded with paggination.
     while (hasMoreProductsToLoad) {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      // await new Promise((resolve) => setTimeout(resolve, 5000));
       const resultProductVariants = await productVariants(cursor);
       // await calculateApiWaitTime(resultProductVariants.extensions.cost);
 
@@ -101,51 +189,6 @@ async function getAllProductVariants() {
     }
 
     return productVariantList;
-  } catch (error) {
-    throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
-  }
-}
-
-/**
- * Create new product variants
- * @param {Array} productToImport
- */
-async function createProductVariant(productToImport) {
-  try {
-    const allProductVariants = await getAllProductVariants();
-
-    // Stop if no product variants available
-    if (allProductVariants.length <= 0) {
-      throw new functions.https.HttpsError("aborted", "No existing variants available", allProductVariants);
-    }
-
-    for (let index = 0; index < allProductVariants.length; index++) {
-      const existingProductVariant = allProductVariants[index];
-
-      if (!existingProductVariant.privateMetafield) {
-        functions.logger.info("No BS description", existingProductVariant.id, existingProductVariant.displayName, {
-          structuredData: true,
-        });
-      }
-
-      // If a product with an associated variant already exists, add the new variant to the product.
-      // If not create a new standalone variant
-      if (existingProductVariant.privateMetafield === productToImport.description) {
-        const newProduct = await productVariantCreateBs(productToImport, existingProductVariant.product.id);
-        functions.logger.info("Product variant created", newProduct.id, newProduct.displayName, {
-          structuredData: true,
-        });
-
-        return newProduct;
-      } else {
-        const newVariant = await productCreateBs(productToImport);
-        functions.logger.info("Product created", newVariant.id, newVariant.title, {
-          structuredData: true,
-        });
-
-        return newVariant;
-      }
-    }
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
   }

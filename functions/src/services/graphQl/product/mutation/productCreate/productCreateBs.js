@@ -1,11 +1,14 @@
 const functions = require("firebase-functions");
 const {gql, request} = require("graphql-request");
 const {shopify} = require("../../../../../config/config");
-const {privateMetafields, metafields} = require("./productCreateConfig");
+const {metafields} = require("./productCreateConfig");
 const {convertUnitOfMeasurement} = require("../../../../../utils/convertUnitOfMeasurement");
 const {calculateInitialSellingPrice} = require("../../../../../utils/calculateInitialSellingPrice");
 const {convertNumberToStringWithComma} = require("../../../../../utils/convertNumberToStringWithComma");
-
+const {checkColorOption} = require("../../../../../utils/color/checkColorOption");
+const {checkColor} = require("../../../../../utils/color/checkColor");
+const {checkSelectionOption} = require("../../../../../utils/selection/checkSelectionOption");
+const {checkSelection} = require("../../../../../utils/selection/checkSelection");
 
 /**
  * Create product
@@ -19,6 +22,11 @@ exports.productCreateBs = async (product) => {
         product {
           id
           title
+          variants(first: 1) {
+            nodes {
+              id
+            }
+          }
         }
         userErrors {
           field
@@ -28,8 +36,15 @@ exports.productCreateBs = async (product) => {
     }
       `;
 
-  const resultPrivateMetafields = privateMetafields(product);
   const resultMetafields = metafields(product);
+  const resultOptionWeight = convertUnitOfMeasurement(product.weight_UnitOfMeasurement);
+  const resultOptionValueWeight = convertNumberToStringWithComma(product.weight);
+
+  const resultOptionColor = checkColorOption(product.color);
+  const resultOptionValueColor = checkColor(product.color);
+
+  const resultOptionSelection = checkSelectionOption(product.additionalProductInformation);
+  const resultOptionValueSelection = checkSelection(product.additionalProductInformation);
 
   const variables = {
     input: {
@@ -37,7 +52,7 @@ exports.productCreateBs = async (product) => {
       title: product.description,
       vendor: product.brand,
       options: [
-        convertUnitOfMeasurement(product.weight_UnitOfMeasurement),
+        resultOptionColor, resultOptionSelection, resultOptionWeight,
       ],
       variants: [
         {
@@ -53,7 +68,7 @@ exports.productCreateBs = async (product) => {
             locationId: shopify.location.BSI.id,
           },
           options: [
-            convertNumberToStringWithComma(product.weight),
+            resultOptionValueColor, resultOptionValueSelection, resultOptionValueWeight,
           ],
           price: calculateInitialSellingPrice(product.price),
           requiresShipping: true,
@@ -61,7 +76,6 @@ exports.productCreateBs = async (product) => {
           weight: product.weight,
           weightUnit: "GRAMS",
           metafields: resultMetafields,
-          privateMetafields: resultPrivateMetafields,
         },
       ],
     },
@@ -71,7 +85,7 @@ exports.productCreateBs = async (product) => {
     const data = await request(shopify.endpoint, mutationProductCreateBs, variables);
 
     if (data.productCreate.userErrors.length > 0) {
-      functions.logger.info("Could not create Variant", product.articleNumber, product.description, data.productCreate.userErrors, {
+      functions.logger.info("Could not create product", product.articleNumber, product.description, data.productCreate.userErrors, {
         structuredData: true,
       });
     } else {

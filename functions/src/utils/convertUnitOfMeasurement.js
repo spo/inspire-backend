@@ -1,8 +1,9 @@
-const {bs} = require("../config/config");
+const {bs, shopify} = require("../config/config");
 
 /**
-   * Transforms BS gender designation into standard gender designation
+   * Transforms BS measurements designation into standard measurements designation
    * @param {string} unitOfMeasurement The BS units of measurements
+   * @return {string} The standard measurements
    *
    */
 exports.convertUnitOfMeasurement = (unitOfMeasurement) => {
@@ -10,16 +11,12 @@ exports.convertUnitOfMeasurement = (unitOfMeasurement) => {
     case bs.unitOfMeasurement.ml:
     case bs.unitOfMeasurement.bottle:
     case bs.unitOfMeasurement.liter:
-      "ml";
-      break;
+      return shopify.options.unitOfMeasurement.ml;
     case bs.unitOfMeasurement.gram:
-      "g";
-      break;
+      return shopify.options.unitOfMeasurement.gram;
     case bs.unitOfMeasurement.piece:
-      "Stück";
-      break;
+      return shopify.options.unitOfMeasurement.piece;
     default:
-      "";
-      break;
+      return "";
   }
 };

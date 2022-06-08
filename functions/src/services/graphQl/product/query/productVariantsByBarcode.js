@@ -1,6 +1,5 @@
 const functions = require("firebase-functions");
-const {gql, rawRequest} = require("graphql-request");
-const {shopify} = require("../../../../config/config");
+const {Shopify} = require("@shopify/shopify-api");
 
 /**
  * Get product variants by barcode
@@ -8,28 +7,29 @@ const {shopify} = require("../../../../config/config");
  * @return {object} Product variants object
  */
 exports.productVariantsByBarcode = async (barcode) => {
-  const productVariantsByBarcode = gql`
-    query ($first: Int!, $query: String) {
-      productVariants(first: $first, query: $query) {
-        edges {
-          node {
-            id
-            displayName
-            barcode
+  const client = new Shopify.Clients.Graphql(Shopify.Context.HOST_NAME, Shopify.Context.API_SECRET_KEY);
+  const request = await client.query({
+    data: {
+      query: `query ($first: Int!, $query: String) {
+        productVariants(first: $first, query: $query) {
+          edges {
+            node {
+              id
+              displayName
+              barcode
+            }
           }
         }
-      }
-    }
-      `;
-
-  const variables = {
-    first: 1,
-    query: `barcode:${barcode}`,
-  };
+      }`,
+      variables: {
+        first: 1,
+        query: `barcode:${barcode}`,
+      },
+    },
+  });
 
   try {
-    const {data, extensions} = await rawRequest(shopify.endpoint, productVariantsByBarcode, variables);
-    return {data, extensions};
+    return {data: request.body.data, extensions: request.body.extensions};
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
   }

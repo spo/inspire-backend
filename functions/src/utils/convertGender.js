@@ -1,4 +1,4 @@
-const {bs} = require("../config/config");
+const {bs, shopify} = require("../config/config");
 
 /**
    * Transforms BS gender designation into standard gender designation
@@ -8,11 +8,11 @@ const {bs} = require("../config/config");
 exports.convertGender = (gender) => {
   switch (gender) {
     case bs.gender.male:
-      return "male";
+      return shopify.options.gender.male;
     case bs.gender.female:
-      return "female";
+      return shopify.options.gender.female;
     case bs.gender.unisex:
-      return "unisex";
+      return shopify.options.gender.unisex;
     default:
       return "";
   }
