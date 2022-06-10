@@ -6,15 +6,12 @@ const {calculateInitialSellingPrice} = require("../../../../../utils/calculateIn
 const {convertNumberToStringWithComma} = require("../../../../../utils/convertNumberToStringWithComma");
 const {checkColor} = require("../../../../../utils/color/checkColor");
 const {checkSelection} = require("../../../../../utils/selection/checkSelection");
-const {productVariantOptions} = require("../../query/productVariantOptions");
-const {productUpdateOptions} = require("../../mutation/productUpdateOptions");
-
 
 /**
  * Create product variant
  * @param {object} product The Bs product
  * @param {object} productId The id of the product to which the product variant is to be added
- * @return {object} The new created product
+ * @return {object} The new created product variant
 */
 exports.productVariantCreateBs = async (product, productId) => {
   try {
@@ -63,14 +60,12 @@ exports.productVariantCreateBs = async (product, productId) => {
         weightUnit: "GRAMS",
         metafields: resultMetafields,
         options: [
-          resultOptionValueColor, resultOptionValueSelection, resultOptionValueWeight,
+          resultOptionValueColor, resultOptionValueSelection, resultOptionValueWeight, // keep order in sync with productCreateBs
         ],
       },
     };
 
-
     const data = await request(shopify.endpoint, productVariantCreate, variables);
-
 
     if (data.productVariantCreate.userErrors.length > 0) {
       const errors = data.productVariantCreate.userErrors;
@@ -78,23 +73,9 @@ exports.productVariantCreateBs = async (product, productId) => {
       for (let index = 0; index < errors.length; index++) {
         const error = errors[index];
 
-        // if variant with same options already exists -> extend options for existing product
-        if (error.message.includes("already exists. Please change at least one option value.")) {
-          const resultProductVariantOptions = await productVariantOptions(productId);
-          const resultProductUpdateOptions = await productUpdateOptions(
-              resultProductVariantOptions.data.id,
-              resultProductVariantOptions.data.options,
-              resultProductVariantOptions.data.variants.edges,
-              product.barcode);
-
-          functions.logger.info("Extend product options", resultProductUpdateOptions.id, resultProductUpdateOptions.title, {
-            structuredData: true,
-          });
-        } else {
-          functions.logger.warn("Could not create variant", product.articleNumber, product.description, data.productVariantCreate.product.title, data.productVariantCreate.userErrors, {
-            structuredData: true,
-          });
-        }
+        functions.logger.info(error.message, product.title, product.barcode, {
+          structuredData: true,
+        });
       }
     } else {
       return data.productVariantCreate.productVariant;

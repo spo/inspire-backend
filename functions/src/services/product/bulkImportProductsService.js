@@ -91,7 +91,7 @@ async function createProductVariant(productToImport) {
     if (allProductVariants.length == 0) {
       const newVariant = await productCreateBs(productToImport);
 
-      functions.logger.info("Product variant created", newVariant.id, newVariant.displayName, {
+      functions.logger.info("Product created", newVariant.id, newVariant.title, {
         structuredData: true,
       });
 

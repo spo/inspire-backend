@@ -17,6 +17,7 @@ module.exports = {
     options: {
       color: "Farbe",
       selection: "Auswahl",
+      version: "Version",
       unitOfMeasurement: {
         ml: "ml",
         gram: "g",

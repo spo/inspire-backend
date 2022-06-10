@@ -52,7 +52,6 @@ exports.productCreatePrivateMetafields = async (productVariantId, product) => {
       throw new functions.https.HttpsError("internal", productVariantId, request.body.data.productVariantUpdate.userErrors);
     }
 
-
     return {data: request.body.data, extensions: request.body.extensions};
   } catch (error) {
     throw new functions.https.HttpsError(error.code, error.message, error.type);
