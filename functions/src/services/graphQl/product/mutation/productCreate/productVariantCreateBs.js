@@ -23,8 +23,8 @@ exports.productVariantCreateBs = async (product, productId) => {
           title
         }
         productVariant {
-          id
           displayName
+          id
           barcode
         }
         userErrors {

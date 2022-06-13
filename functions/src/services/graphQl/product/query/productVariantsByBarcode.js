@@ -5,7 +5,7 @@ const {shopify} = require("../../../../config/config");
 /**
  * Get product variants by barcode
  * @param {string} barcode The product variant barcode
- * @return {object} Product variants object
+ * @return {object} The product variants
  */
 exports.productVariantsByBarcode = async (barcode) => {
   try {

@@ -5,13 +5,12 @@ const {productVariants} = require("../../services/graphQl/product/query/productV
 const {productCreateBs} = require("../graphQl/product/mutation/productCreate/productCreateBs");
 const {productVariantCreateBs} = require("../graphQl/product/mutation/productCreate/productVariantCreateBs");
 const {productCreatePrivateMetafields} = require("../graphQl/product/mutation/productCreate/productCreatePrivateMetafields");
-const {calculateApiWaitTime} = require("../../utils/calculateApiWaitTime");
+const {apiWait} = require("../../utils/apiWait");
 
 exports.bulkImportProducts = async (slice = {from: 0}) => {
   try {
-    const importedProducts = [];
     const productsToImport = await getBsProducts();
-    const result = await startImport(productsToImport.slice(slice.from, slice.to), importedProducts);
+    const result = await startImport(productsToImport.slice(slice.from, slice.to));
     return result;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
@@ -19,48 +18,48 @@ exports.bulkImportProducts = async (slice = {from: 0}) => {
 };
 
 /**
- * Create new product variants that not exists already.
- * @param {Array} productsToImport List of products
- * @param {string} importedProducts Product description
- * @return {Array} List with all variants
+ * Create new product variants that do not yet exist
+ * @param {Array} productsToImport Product variants to be imported
+ * @return {Array} List with all impoted product variants
  */
-const startImport = async (productsToImport, importedProducts) => {
+const startImport = async (productsToImport) => {
   try {
-    // Loop over all products to be import
+    const importedProducts = [];
+
+    // Loop over all product variants to be import
     for (let index = 0; index < productsToImport.length; index++) {
-      const productToImport = productsToImport[index];
+      const productVariantToImport = productsToImport[index];
 
-      if (!productToImport) {
-        functions.logger.info("The product to be imported is not defined", index, {
+      if (!productVariantToImport) {
+        functions.logger.info("The product variant to be imported is not defined", index, {
           structuredData: true,
         });
         continue;
       }
 
-      if (!productToImport.barcode) {
-        functions.logger.info("The product to be importied does not have a barcode", productToImport.articleNumber, productToImport.description, {
+      if (!productVariantToImport.barcode) {
+        functions.logger.info("The product variant to be importied does not have a barcode", productVariantToImport.articleNumber, productVariantToImport.description, {
           structuredData: true,
         });
         continue;
       }
 
-      const existingProduct = await productVariantsByBarcode(productToImport.barcode);
+      const existingProduct = await productVariantsByBarcode(productVariantToImport.barcode);
 
       if (existingProduct && existingProduct.extensions) {
-        await calculateApiWaitTime(existingProduct.extensions);
+        await apiWait(existingProduct.extensions);
       }
-
 
       // Skip variants with existing barcode
       if (existingProduct.data.length > 0) {
-        functions.logger.info("Variant with barcode already exists", productToImport.articleNumber, productToImport.description, productToImport.barcode, {
+        functions.logger.info("Product variant with barcode already exists", productVariantToImport.articleNumber, productVariantToImport.description, productVariantToImport.barcode, {
           structuredData: true,
         });
         continue;
       }
 
-      const newProduct = await createProductVariant(productToImport);
-      importedProducts.push(newProduct);
+      const importedProductVariants = await importProductVariant(productVariantToImport);
+      importedProducts.push(importedProductVariants);
     }
 
     return importedProducts;
@@ -71,70 +70,70 @@ const startImport = async (productsToImport, importedProducts) => {
 
 /**
  * Create new product variants
- * @param {Array} productToImport
+ * @param {Array} productVariantToImport
  */
-async function createProductVariant(productToImport) {
+async function importProductVariant(productVariantToImport) {
   try {
-    let isproductVariant = false;
     const allProductVariants = await getAllProductVariants();
 
-    // if no product variants exist
+    // if no product variants exist create new product
     if (allProductVariants.length == 0) {
-      const newVariant = await productCreateBs(productToImport);
-
-      if (newVariant && newVariant.variants.nodes[0].id) {
-        await productCreatePrivateMetafields(newVariant.variants.nodes[0].id, productToImport);
-        return newVariant;
-      }
+      const product = await createProductWithPrivateMetafields(productVariantToImport);
+      return product;
     }
 
-    let existingProductVariantProductId = null;
+    const existingProductId = isVariantExists(allProductVariants, productVariantToImport);
 
-    // Loop over existing products
-    for (let index = 0; index < allProductVariants.length; index++) {
-      const existingProductVariant = allProductVariants[index];
-
-      if (!existingProductVariant.privateMetafield) {
-        functions.logger.warn("No BS description", existingProductVariant.id, existingProductVariant.displayName, {
-          structuredData: true,
-        });
-        continue;
-      }
-
-      // If a product with an associated variant already exists, add the new variant to the product.
-      // If not create a new standalone variant
-      if (existingProductVariant.privateMetafield.value === productToImport.description) {
-        isproductVariant = true;
-        existingProductVariantProductId = existingProductVariant.product.id;
-        break;
-      } else {
-        isproductVariant = false;
-      }
-    }
-
-    if (isproductVariant) {
-      const newVariant = await productVariantCreateBs(productToImport, existingProductVariantProductId);
-
-      if (newVariant && newVariant.extensions) {
-        await calculateApiWaitTime(newVariant.extensions);
-      }
-
-      if (newVariant && newVariant.id) {
-        await productCreatePrivateMetafields(newVariant.id, productToImport);
-        return newVariant;
-      }
+    if (existingProductId === "") {
+      const product = await createProductWithPrivateMetafields(productVariantToImport);
+      return product;
     } else {
-      const newProduct = await productCreateBs(productToImport);
+      const variant = await createProductVariantWithPrivateMetafields(productVariantToImport, existingProductId);
+      return variant;
+    }
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
+  }
+}
 
-      if (newProduct && newProduct.extensions) {
-        await calculateApiWaitTime(newProduct.extensions);
-      }
 
-      if (newProduct && newProduct.data.variants.nodes[0].id) {
-        await productCreatePrivateMetafields(newProduct.data.variants.nodes[0].id, productToImport);
-      } else {
-        return newProduct;
-      }
+/**
+ * Create product with private meta fields
+ * @param {object} productVariantToImport The bs product variant to be imported
+ */
+async function createProductWithPrivateMetafields(productVariantToImport) {
+  try {
+    const newProduct = await productCreateBs(productVariantToImport);
+
+    if (newProduct && newProduct.extensions) {
+      await apiWait(newProduct.extensions);
+    }
+
+    if (newProduct && newProduct.data.variants.nodes[0].id) {
+      await productCreatePrivateMetafields(newProduct.data.variants.nodes[0].id, productVariantToImport);
+      return newProduct.data;
+    }
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
+  }
+}
+
+/**
+ * Create product variant with private meta fields
+ * @param {object} productVariantToImport The bs product variant to be imported
+ * @param {string} productId The product id
+ */
+async function createProductVariantWithPrivateMetafields(productVariantToImport, productId) {
+  try {
+    const variant = await productVariantCreateBs(productVariantToImport, productId);
+
+    if (variant && variant.extensions) {
+      await apiWait(variant.extensions);
+    }
+
+    if (variant && variant.id) {
+      await productCreatePrivateMetafields(variant.id, productVariantToImport);
+      return variant;
     }
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
@@ -155,7 +154,7 @@ async function getAllProductVariants() {
       const resultProductVariants = await productVariants(cursor);
 
       if (resultProductVariants && resultProductVariants.extensions) {
-        await calculateApiWaitTime(resultProductVariants.extensions);
+        await apiWait(resultProductVariants.extensions);
       }
 
       hasMoreProductsToLoad = resultProductVariants.data.pageInfo.hasNextPage;
@@ -171,4 +170,33 @@ async function getAllProductVariants() {
   }
 }
 
+/**
+ * Checks whether the variant to be imported is to be created as a new product or added to an existing product.
+ * @param {Array} allProductVariants All existing product variants
+ * @param {object} productVariantToImport The product variant to be imported
+ * @return {string} The product id
+ */
+function isVariantExists(allProductVariants, productVariantToImport) {
+  let existingProductId = "";
+
+  // Loop over existing products
+  for (let index = 0; index < allProductVariants.length; index++) {
+    const existingProductVariant = allProductVariants[index];
+
+    if (!existingProductVariant.privateMetafield) {
+      functions.logger.warn("No bs description available as private metafield", existingProductVariant.id, existingProductVariant.displayName, {
+        structuredData: true,
+      });
+      continue;
+    }
+
+    // If a product with an associated variant already exists, add the new variant to the product.
+    // If not create a new standalone product
+    if (existingProductVariant.privateMetafield.value === productVariantToImport.description) {
+      existingProductId = existingProductVariant.product.id;
+      return existingProductId;
+    }
+  }
+  return existingProductId;
+}
 

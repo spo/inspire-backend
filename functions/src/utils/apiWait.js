@@ -1,12 +1,12 @@
 const functions = require("firebase-functions");
-const {wait} = require("../utils/wait");
+const {wait} = require("./wait");
 
 /**
    * Calcualtes the wait time for next api call -> https://shopify.dev/api/usage/rate-limits#graphql-admin-api-rate-limits
    * @param {string} queryCost The query cost informaiton from api response
    * @return {Promise<string>} The ms to wait
    */
-exports.calculateApiWaitTime = async (queryCost) => {
+exports.apiWait = async (queryCost) => {
   try {
     // If not query cost is defined return 10 sec
     if (!queryCost) {
@@ -14,14 +14,11 @@ exports.calculateApiWaitTime = async (queryCost) => {
         structuredData: true,
       });
 
-      return await wait(10000);
+      return await wait(5000);
     }
 
     // wait because of graphql request limit rate
     if (queryCost.requestedQueryCost > (queryCost.throttleStatus.currentlyAvailable - queryCost.throttleStatus.restoreRate)) {
-      // const diff = queryCost.throttleStatus.currentlyAvailable-queryCost.requestedQueryCost;
-      // const waitTime = diff*1000/queryCost.throttleStatus.restoreRate;
-      // console.log(waitTime);
       return await wait(5000);
     }
   } catch (error) {

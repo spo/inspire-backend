@@ -12,7 +12,7 @@ const {checkSelection} = require("../../../../../utils/selection/checkSelection"
 
 /**
  * Create product
- * @param {object} product The Bs product
+ * @param {object} product The bs product
  * @return {object} The new created product
 */
 exports.productCreateBs = async (product) => {
@@ -92,7 +92,13 @@ exports.productCreateBs = async (product) => {
       functions.logger.warn("Could not create product", product.articleNumber, product.description, data.productCreate.userErrors, {
         structuredData: true,
       });
+
+      return;
     } else {
+      functions.logger.info("Product created", data.productCreate.product.id, data.productCreate.product.title, {
+        structuredData: true,
+      });
+
       return {data: data.productCreate.product, extensions: extensions.cost};
     }
   } catch (error) {
