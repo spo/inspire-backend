@@ -1,5 +1,5 @@
 const functions = require("firebase-functions");
-const {gql, request} = require("graphql-request");
+const {gql, rawRequest} = require("graphql-request");
 const {shopify} = require("../../../../../config/config");
 const {metafields} = require("./productCreateConfig");
 const {convertUnitOfMeasurement} = require("../../../../../utils/convertUnitOfMeasurement");
@@ -25,6 +25,7 @@ exports.productCreateBs = async (product) => {
           variants(first: 1) {
             nodes {
               id
+              barcode
             }
           }
         }
@@ -82,14 +83,17 @@ exports.productCreateBs = async (product) => {
   };
 
   try {
-    const data = await request(shopify.endpoint, mutationProductCreateBs, variables);
+    const {data, errors, extensions} = await rawRequest(shopify.endpoint, mutationProductCreateBs, variables);
+    if (errors) {
+      throw new functions.https.HttpsError("internal", errors);
+    }
 
-    if (data.productCreate.userErrors.length > 0) {
-      functions.logger.info("Could not create product", product.articleNumber, product.description, data.productCreate.userErrors, {
+    if (data.productCreate.userErrors && data.productCreate.userErrors.length > 0) {
+      functions.logger.warn("Could not create product", product.articleNumber, product.description, data.productCreate.userErrors, {
         structuredData: true,
       });
     } else {
-      return data.productCreate.product;
+      return {data: data.productCreate.product, extensions: extensions.cost};
     }
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code, product.articleNumber, product.description);

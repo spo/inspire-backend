@@ -190,7 +190,7 @@ exports.updateProductImage= async (product, variant, media) => {
 
   if (resultProductVariantAppendMedia.userErrors && resultProductVariantAppendMedia.userErrors.length > 0) {
     const {code, field, message} = resultProductVariantAppendMedia.userErrors[0];
-    functions.logger.info("Could not attach media to variant", variant.id, variant.displayName, code, field, message, {
+    functions.logger.warn("Could not attach media to variant", variant.id, variant.displayName, code, field, message, {
       structuredData: true,
     });
     return;

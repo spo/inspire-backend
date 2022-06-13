@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
-const {Shopify} = require("@shopify/shopify-api");
+const {gql, rawRequest} = require("graphql-request");
+const {shopify} = require("../../../../config/config");
 
 /**
  * Get product variants by barcode
@@ -7,29 +8,38 @@ const {Shopify} = require("@shopify/shopify-api");
  * @return {object} Product variants object
  */
 exports.productVariantsByBarcode = async (barcode) => {
-  const client = new Shopify.Clients.Graphql(Shopify.Context.HOST_NAME, Shopify.Context.API_SECRET_KEY);
-  const request = await client.query({
-    data: {
-      query: `query ($first: Int!, $query: String) {
-        productVariants(first: $first, query: $query) {
-          edges {
-            node {
-              id
-              displayName
-              barcode
-            }
+  try {
+    const queryProductVariants = gql `
+    query ($first: Int!, $query: String) {
+      productVariants(first: $first, query: $query) {
+        edges {
+          node {
+            id
+            displayName
+            barcode
           }
         }
-      }`,
-      variables: {
-        first: 1,
-        query: `barcode:${barcode}`,
-      },
-    },
-  });
+      }
+    }`;
 
-  try {
-    return {data: request.body.data, extensions: request.body.extensions};
+    const variables = {
+      first: 1,
+      query: `barcode:${barcode}`,
+    };
+
+    const {data, errors, extensions} = await rawRequest(shopify.endpoint, queryProductVariants, variables);
+
+    if (errors) {
+      throw new functions.https.HttpsError("internal", errors);
+    }
+
+    if (data.productVariants.userErrors && data.productVariants.userErrors.length > 0) {
+      functions.logger.warn("Could not query product variant by barcode", barcode, data.productVariants.userErrors, {
+        structuredData: true,
+      });
+    } else {
+      return {data: data.productVariants.edges, extensions: extensions.cost};
+    }
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
   }

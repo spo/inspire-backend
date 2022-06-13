@@ -6,18 +6,6 @@ const {productCreateBs} = require("../graphQl/product/mutation/productCreate/pro
 const {productVariantCreateBs} = require("../graphQl/product/mutation/productCreate/productVariantCreateBs");
 const {productCreatePrivateMetafields} = require("../graphQl/product/mutation/productCreate/productCreatePrivateMetafields");
 const {calculateApiWaitTime} = require("../../utils/calculateApiWaitTime");
-const {wait} = require("../../utils/wait");
-
-
-// 1) Produkt aus Liste nehmen
-// 2 Prüfen ob Produkt schon vorhanden
-// 2.1 Wenn vorhanden mit Barcode dann nicht anlegen
-// 2.2 Wenn nicht vorhanden jedoch mit gleicher description dann als Variante anlegen
-// 2.3 Wenn nicht vorhanden und auch nicht mit gleicher description dann als neues Produkt anlegen
-
-// 2) mit diesem Produkt komplette Liste durch suchen ob noch weitere Varianten vorhanden sind
-// 3) Wenn nein dann produkt anlegen
-// 4) Wenn ja dann Produkt mit allen Varianten anlegen
 
 exports.bulkImportProducts = async (slice = {from: 0}) => {
   try {
@@ -56,12 +44,15 @@ const startImport = async (productsToImport, importedProducts) => {
         continue;
       }
 
-      // await new Promise((resolve) => setTimeout(resolve, 5000));
       const existingProduct = await productVariantsByBarcode(productToImport.barcode);
-      // await calculateApiWaitTime(existingProduct.extensions.cost);
+
+      if (existingProduct && existingProduct.extensions) {
+        await calculateApiWaitTime(existingProduct.extensions);
+      }
+
 
       // Skip variants with existing barcode
-      if (existingProduct.data.productVariants.edges.length > 0) {
+      if (existingProduct.data.length > 0) {
         functions.logger.info("Variant with barcode already exists", productToImport.articleNumber, productToImport.description, productToImport.barcode, {
           structuredData: true,
         });
@@ -91,19 +82,10 @@ async function createProductVariant(productToImport) {
     if (allProductVariants.length == 0) {
       const newVariant = await productCreateBs(productToImport);
 
-      functions.logger.info("Product created", newVariant.id, newVariant.title, {
-        structuredData: true,
-      });
-
-      if (newVariant.variants.nodes[0].id) {
+      if (newVariant && newVariant.variants.nodes[0].id) {
         await productCreatePrivateMetafields(newVariant.variants.nodes[0].id, productToImport);
-      } else {
-        functions.logger.warn("Could not update private meta fields", newVariant.id, newVariant.title, {
-          structuredData: true,
-        });
+        return newVariant;
       }
-
-      return newVariant;
     }
 
     let existingProductVariantProductId = null;
@@ -113,7 +95,7 @@ async function createProductVariant(productToImport) {
       const existingProductVariant = allProductVariants[index];
 
       if (!existingProductVariant.privateMetafield) {
-        functions.logger.info("No BS description", existingProductVariant.id, existingProductVariant.displayName, {
+        functions.logger.warn("No BS description", existingProductVariant.id, existingProductVariant.displayName, {
           structuredData: true,
         });
         continue;
@@ -132,33 +114,27 @@ async function createProductVariant(productToImport) {
 
     if (isproductVariant) {
       const newVariant = await productVariantCreateBs(productToImport, existingProductVariantProductId);
-      functions.logger.info("Product variant created", newVariant.id, newVariant.displayName, {
-        structuredData: true,
-      });
 
-      if (newVariant.id) {
-        await productCreatePrivateMetafields(newVariant.id, productToImport);
-      } else {
-        functions.logger.warn("Could not update private meta fields", newVariant.id, newVariant.title, {
-          structuredData: true,
-        });
+      if (newVariant && newVariant.extensions) {
+        await calculateApiWaitTime(newVariant.extensions);
       }
 
-      return newVariant;
+      if (newVariant && newVariant.id) {
+        await productCreatePrivateMetafields(newVariant.id, productToImport);
+        return newVariant;
+      }
     } else {
       const newProduct = await productCreateBs(productToImport);
-      functions.logger.info("Product created", newProduct.id, newProduct.title, {
-        structuredData: true,
-      });
 
-      if (newProduct.variants.nodes[0].id) {
-        await productCreatePrivateMetafields(newProduct.variants.nodes[0].id, productToImport);
-      } else {
-        functions.logger.warn("Could not update private meta fields", newProduct.id, newProduct.title, {
-          structuredData: true,
-        });
+      if (newProduct && newProduct.extensions) {
+        await calculateApiWaitTime(newProduct.extensions);
       }
-      return newProduct;
+
+      if (newProduct && newProduct.data.variants.nodes[0].id) {
+        await productCreatePrivateMetafields(newProduct.data.variants.nodes[0].id, productToImport);
+      } else {
+        return newProduct;
+      }
     }
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
@@ -176,14 +152,15 @@ async function getAllProductVariants() {
 
     // Loop over all existing product variants. The product variants are loaded with paggination.
     while (hasMoreProductsToLoad) {
-      // await new Promise((resolve) => setTimeout(resolve, 5000));
       const resultProductVariants = await productVariants(cursor);
-      // await calculateApiWaitTime(resultProductVariants.extensions.cost);
 
+      if (resultProductVariants && resultProductVariants.extensions) {
+        await calculateApiWaitTime(resultProductVariants.extensions);
+      }
 
-      hasMoreProductsToLoad = resultProductVariants.data.productVariants.pageInfo.hasNextPage;
-      cursor = resultProductVariants.data.productVariants.pageInfo.endCursor;
-      const variants = resultProductVariants.data.productVariants.nodes;
+      hasMoreProductsToLoad = resultProductVariants.data.pageInfo.hasNextPage;
+      cursor = resultProductVariants.data.pageInfo.endCursor;
+      const variants = resultProductVariants.data.nodes;
 
       productVariantList.push(...variants);
     }

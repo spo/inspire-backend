@@ -1,5 +1,3 @@
-
-
 const functions = require("firebase-functions");
 const {wait} = require("../utils/wait");
 
@@ -19,13 +17,11 @@ exports.calculateApiWaitTime = async (queryCost) => {
       return await wait(10000);
     }
 
-    // TODO: limit wird noch nicht korrekt berechnet. Und metafields werden nicht gesetzt wenn Produkt erzeugt wird.
-
     // wait because of graphql request limit rate
-    if ((queryCost.throttleStatus.currentlyAvailable-500)<queryCost.requestedQueryCost) {
-      const diff = queryCost.throttleStatus.currentlyAvailable-queryCost.requestedQueryCost;
-      const waitTime = diff*1000/queryCost.throttleStatus.restoreRate;
-      console.log(waitTime);
+    if (queryCost.requestedQueryCost > (queryCost.throttleStatus.currentlyAvailable - queryCost.throttleStatus.restoreRate)) {
+      // const diff = queryCost.throttleStatus.currentlyAvailable-queryCost.requestedQueryCost;
+      // const waitTime = diff*1000/queryCost.throttleStatus.restoreRate;
+      // console.log(waitTime);
       return await wait(5000);
     }
   } catch (error) {

@@ -25,6 +25,7 @@ exports.productVariantCreateBs = async (product, productId) => {
         productVariant {
           id
           displayName
+          barcode
         }
         userErrors {
           field
@@ -73,11 +74,17 @@ exports.productVariantCreateBs = async (product, productId) => {
       for (let index = 0; index < errors.length; index++) {
         const error = errors[index];
 
-        functions.logger.info(error.message, product.title, product.barcode, {
+        functions.logger.warn(error.message, product.description, product.barcode, {
           structuredData: true,
         });
       }
+
+      return;
     } else {
+      functions.logger.info("Product varaint created", data.productVariantCreate.productVariant.id, data.productVariantCreate.productVariant.displayName, data.productVariantCreate.product.barcode, {
+        structuredData: true,
+      });
+
       return data.productVariantCreate.productVariant;
     }
   } catch (error) {
