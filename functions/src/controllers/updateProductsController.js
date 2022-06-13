@@ -1,13 +1,13 @@
 const functions = require("firebase-functions");
 const getGoogleShoppingData = require("../services/common/getGoogleShoppingData"); // TODO: use {}
-const {bulkUpdateProductsService} = require("../services");
+const {updateProductsService} = require("../services");
 const {productsSlice} = require("../services/graphQl/product/query/productsSlice");
 
 /**
  * Update title, description, images for all products including variants.
  * @param {number} minimumStock Minimum required stock in order to update product
  */
-exports.bulkUpdateProducts = async (minimumStock = 0) => {
+exports.updateProducts = async (minimumStock = 0) => {
   const productList = [];
   let hasMoreProductsToLoad = true;
   let cursor = null;
@@ -112,7 +112,7 @@ async function loopProductVariantsSlice(product, productList) {
     }
 
     // add title
-    const resultProductTitle = await bulkUpdateProductsService.updateProductTitle(product, googleShoppingData.product_results.title);
+    const resultProductTitle = await updateProductsService.updateProductTitle(product, googleShoppingData.product_results.title);
 
     if (resultProductTitle) {
       productList.push({
@@ -124,7 +124,7 @@ async function loopProductVariantsSlice(product, productList) {
     }
 
     // add description
-    const resultProductDescription = await bulkUpdateProductsService.updateProductDescription(product, googleShoppingData.product_results.description);
+    const resultProductDescription = await updateProductsService.updateProductDescription(product, googleShoppingData.product_results.description);
 
     if (resultProductDescription) {
       productList.push({
@@ -136,7 +136,7 @@ async function loopProductVariantsSlice(product, productList) {
     }
 
     // add image
-    const resultProductImage = await bulkUpdateProductsService.updateProductImage(product, variant, googleShoppingData.product_results.media);
+    const resultProductImage = await updateProductsService.updateProductImage(product, variant, googleShoppingData.product_results.media);
 
     if (resultProductImage) {
       productList.push({

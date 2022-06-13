@@ -1,1 +1,1 @@
-module.exports.bulkUpdateProductsService = require("./product/bulkUpdateProductsService");
+module.exports.updateProductsService = require("./product/updateProductsService");

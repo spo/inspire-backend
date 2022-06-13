@@ -7,7 +7,7 @@ const {productVariantCreateBs} = require("../graphQl/product/mutation/productCre
 const {productCreatePrivateMetafields} = require("../graphQl/product/mutation/productCreate/productCreatePrivateMetafields");
 const {apiWait} = require("../../utils/apiWait");
 
-exports.bulkImportProducts = async (slice = {from: 0}) => {
+exports.importProducts = async (slice = {from: 0}) => {
   try {
     const productsToImport = await getBsProducts();
     const result = await startImport(productsToImport.slice(slice.from, slice.to));
