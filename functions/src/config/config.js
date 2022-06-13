@@ -1,15 +1,14 @@
 require("dotenv").config();
 
 const {
-  API_KEY_SHOPIFY,
-  API_SECRET_KEY_SHOPIFY,
-  HOST_SHOPIFY,
-  API_VERSION_SHOPIFY} = process.env;
+  SHOPIFY_API_KEY,
+  SHOPIFY_API_SECRET_KEY,
+  SHOPIFY_HOST,
+  SHOPIFY_API_VERSION} = process.env;
 
-// TODO: use shopify node lib
 module.exports = {
   shopify: {
-    endpoint: `https://${API_KEY_SHOPIFY}:${API_SECRET_KEY_SHOPIFY}@${HOST_SHOPIFY}/admin/api/${API_VERSION_SHOPIFY}/graphql.json`,
+    endpoint: `https://${SHOPIFY_API_KEY}:${SHOPIFY_API_SECRET_KEY}@${SHOPIFY_HOST}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
     location: {
       FUE: {id: "gid://shopify/Location/66785018045"},
       BSI: {id: "gid://shopify/Location/66974318781"},
