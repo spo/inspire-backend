@@ -4,6 +4,7 @@ const {productVariantsByBarcode} = require("../../services/graphQl/product/query
 const {productVariants} = require("../../services/graphQl/product/query/productVariants");
 const {productCreateBs} = require("../graphQl/product/mutation/productCreate/productCreateBs");
 const {productVariantCreateBs} = require("../graphQl/product/mutation/productCreate/productVariantCreateBs");
+const {productVariantCreatePrivateMetafields} = require("../graphQl/product/mutation/productCreate/productVariantCreatePrivateMetafields");
 const {productCreatePrivateMetafields} = require("../graphQl/product/mutation/productCreate/productCreatePrivateMetafields");
 const {apiWait} = require("../../utils/apiWait");
 
@@ -110,7 +111,8 @@ async function createProductWithPrivateMetafields(productVariantToImport) {
     }
 
     if (newProduct && newProduct.data.variants.nodes[0].id) {
-      await productCreatePrivateMetafields(newProduct.data.variants.nodes[0].id, productVariantToImport);
+      await productVariantCreatePrivateMetafields(newProduct.data.variants.nodes[0].id, productVariantToImport);
+      await productCreatePrivateMetafields(newProduct.data.id);
       return newProduct.data;
     }
   } catch (error) {
@@ -132,7 +134,7 @@ async function createProductVariantWithPrivateMetafields(productVariantToImport,
     }
 
     if (variant && variant.id) {
-      await productCreatePrivateMetafields(variant.id, productVariantToImport);
+      await productVariantCreatePrivateMetafields(variant.id, productVariantToImport);
       return variant;
     }
   } catch (error) {

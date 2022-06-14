@@ -3,7 +3,7 @@ const functions = require("firebase-functions");
 require("dotenv").config();
 
 /**
- * TODO: add comment
+ * Get google shopping data like images, titles, descriptions.
  * @param {*} productId
  * @param {*} ean
  * @return {object} google shopping data
@@ -27,8 +27,8 @@ exports.getGoogleShoppingData = async function(productId, ean) {
   const responseProductId = await fetch(urlSearch + paramsSearch);
   const dataProductId = await responseProductId.json();
 
-  if (dataProductId.error) {
-    functions.logger.info("Could not load google shopping data for product id:", productId, dataProductId, {
+  if (dataProductId && dataProductId.error) {
+    functions.logger.log("Could not load google shopping data for product id:", productId, dataProductId.error, {
       structuredData: true,
     });
     return dataProductId;

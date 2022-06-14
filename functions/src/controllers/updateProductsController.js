@@ -1,13 +1,14 @@
 const functions = require("firebase-functions");
-const getGoogleShoppingData = require("../services/common/getGoogleShoppingData"); // TODO: use {}
+const {getGoogleShoppingData} = require("../services/common/getGoogleShoppingData");
 const {updateProductsService} = require("../services");
 const {productsSlice} = require("../services/graphQl/product/query/productsSlice");
 
 /**
  * Update title, description, images for all products including variants.
  * @param {number} minimumStock Minimum required stock in order to update product
+ * @param {boolean} updateTitle Whether to update the title
  */
-exports.updateProducts = async (minimumStock = 0) => {
+exports.updateProducts = async (minimumStock = 0, updateTitle = false) => {
   const productList = [];
   let hasMoreProductsToLoad = true;
   let cursor = null;
@@ -19,7 +20,7 @@ exports.updateProducts = async (minimumStock = 0) => {
   try {
     // Loop over all products. The products are loaded with paggination.
     while (hasMoreProductsToLoad) {
-      const result = await loopProductsSlice(productList, minimumStock, cursor);
+      const result = await loopProductsSlice(productList, minimumStock, updateTitle, cursor);
       hasMoreProductsToLoad = result.hasNextPage;
       cursor = result.endCursor;
     }
@@ -35,9 +36,10 @@ exports.updateProducts = async (minimumStock = 0) => {
  *
  * @param {Array} productList List contains updated products/variansts
  * @param {number} minimumStock Minimum required stock in order to update product
+ * @param {boolean} updateTitle Whether to update the title
  * @param {string} cursor The cursor corresponding to the last node in edges
  */
-async function loopProductsSlice(productList, minimumStock, cursor) {
+async function loopProductsSlice(productList, minimumStock, updateTitle, cursor) {
   const resultProductsSlice = await productsSlice(cursor);
   const totalProducts = resultProductsSlice.products.nodes.length;
   const products = resultProductsSlice.products.nodes;
@@ -49,7 +51,6 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
     throw new functions.https.HttpsError("aborted", "No products available", resultProductsSlice);
   }
 
-  // TODO: ggf. durch map ersetzen
   // Loop over products slice
   for (let index = 0; index < totalProducts; index++) {
     const product = products[index];
@@ -63,14 +64,14 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
     }
 
     // Skip when product has no given minium stock
-    if (!product.totalInventory > minimumStock) {
+    if (!(product.totalInventory >= minimumStock)) {
       functions.logger.warn("Not given minimum stock for product", product.id, product.title, minimumStock, {
         structuredData: true,
       });
       continue;
     }
 
-    await loopProductVariantsSlice(product, productList);
+    await loopProductVariantsSlice(product, productList, updateTitle);
   }
 
   return {productList, endCursor, hasNextPage};
@@ -80,24 +81,26 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
  * Loop over variants slice and update variants
  * @param {object} product Product that includes variants to loop over
  * @param {Array} productList List contains updated products/variansts
-  * @return {Array } All updated variants
+ * @param {boolean} updateTitle Whether to update the title
+ * @return {Array } All updated variants
+ *
  */
-async function loopProductVariantsSlice(product, productList) {
+async function loopProductVariantsSlice(product, productList, updateTitle) {
   // Loop over variants
   for (let index = 0; index < product.totalVariants; index++) {
     const variant = product.variants.nodes[index];
 
     // Skip variants without barcode (required for google shopping query)
     if (!variant.barcode) {
-      functions.logger.log("Variant has not barcode", variant.id, variant.displayName, {
+      functions.logger.log("Variant has no barcode", variant.id, variant.displayName, {
         structuredData: true,
       });
       continue;
     }
 
-    const googleShoppingData = await getGoogleShoppingData.getGoogleShoppingData(product.id, variant.barcode);
+    const googleShoppingData = await getGoogleShoppingData(product.id, variant.barcode);
 
-    // skip variant if Google Shopping data could not be loaded
+    // skip variant if google shopping data could not be loaded
     if (!googleShoppingData && !googleShoppingData.product_results) {
       functions.logger.warn("Could not load google shopping data for", variant.id, variant.displayName, googleShoppingData.error, {
         structuredData: true,
@@ -109,18 +112,24 @@ async function loopProductVariantsSlice(product, productList) {
       functions.logger.warn("No google shopping data for", variant.id, variant.displayName, googleShoppingData.product_results.error, {
         structuredData: true,
       });
+
+      if (googleShoppingData.product_results.error === "Product page blank.") {
+        continue;
+      }
     }
 
-    // add title
-    const resultProductTitle = await updateProductsService.updateProductTitle(product, googleShoppingData.product_results.title);
+    if (updateTitle) {
+      // add title
+      const resultProductTitle = await updateProductsService.updateProductTitle(product, googleShoppingData.product_results.title);
 
-    if (resultProductTitle) {
-      productList.push({
-        title: {
-          productId: resultProductTitle.productUpdate.product.id,
-          productTitle: resultProductTitle.productUpdate.product.title,
-        },
-      });
+      if (resultProductTitle) {
+        productList.push({
+          title: {
+            productId: resultProductTitle.productUpdate.product.id,
+            productTitle: resultProductTitle.productUpdate.product.title,
+          },
+        });
+      }
     }
 
     // add description

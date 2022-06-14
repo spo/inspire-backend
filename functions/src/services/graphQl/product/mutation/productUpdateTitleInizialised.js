@@ -26,16 +26,15 @@ exports.productUpdateTitleInizialised = async (productId, value) => {
           message
         }
       }
-    }
-      `;
+    }`;
 
   const variables = {
     input: {
       id: productId,
       privateMetafields: [
         {
-          key: shopify.privateMetafields.product.bsInizialisedle.key,
-          namespace: shopify.privateMetafields.product.bsInizialisedle.namespace,
+          key: shopify.privateMetafields.product.initialised,
+          namespace: shopify.privateMetafields.product.namespace,
           valueInput: {
             value,
             valueType: "STRING",

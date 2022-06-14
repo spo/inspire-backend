@@ -16,31 +16,31 @@ exports.metafields = (product) => {
 
   const metafields = [
     {
-      key: shopify.privateMetafields.product.bsGender.key,
+      key: shopify.privateMetafields.product.bs.gender,
       namespace: shopify.privateMetafields.product.namespace,
       type: "string",
       value: convertGender(product.gender),
     },
     {
-      key: shopify.privateMetafields.product.bsColor.key,
+      key: shopify.privateMetafields.product.bs.color,
       namespace: shopify.privateMetafields.product.namespace,
       type: "string",
       value: checkColor(product.color),
     },
     {
-      key: shopify.privateMetafields.product.bsLength.key,
+      key: shopify.privateMetafields.product.bs.length,
       namespace: shopify.privateMetafields.product.namespace,
       type: "integer",
       value: convertNumberToStringWithComma(product.length),
     },
     {
-      key: shopify.privateMetafields.product.bsWidth.key,
+      key: shopify.privateMetafields.product.bs.width,
       namespace: shopify.privateMetafields.product.namespace,
       type: "integer",
       value: convertNumberToStringWithComma(product.width),
     },
     {
-      key: shopify.privateMetafields.product.bsHeight.key,
+      key: shopify.privateMetafields.product.bs.height,
       namespace: shopify.privateMetafields.product.namespace,
       type: "integer",
       value: convertNumberToStringWithComma(product.height),
@@ -60,7 +60,7 @@ exports.privateMetafields = (product) => {
 
   const privateMetafields = [
     {
-      key: shopify.privateMetafields.product.bsArticleNumber.key,
+      key: shopify.privateMetafields.product.bs.articleNumber,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.articleNumber),
@@ -68,7 +68,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsType.key,
+      key: shopify.privateMetafields.product.bs.type,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.type),
@@ -76,7 +76,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsAssortment.key,
+      key: shopify.privateMetafields.product.bs.assortment,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.assortment),
@@ -84,7 +84,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsSort.key,
+      key: shopify.privateMetafields.product.bs.sort,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.sort),
@@ -92,7 +92,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsUsedFor.key,
+      key: shopify.privateMetafields.product.bs.usedFor,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.usedFor),
@@ -100,7 +100,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsVersion.key,
+      key: shopify.privateMetafields.product.bs.version,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.version),
@@ -108,7 +108,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsEdition.key,
+      key: shopify.privateMetafields.product.bs.edition,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.edition),
@@ -116,7 +116,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsAdditionalProductInformation.key,
+      key: shopify.privateMetafields.product.bs.additionalProductInformation,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.additionalProductInformation),
@@ -124,7 +124,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsCategory.key,
+      key: shopify.privateMetafields.product.bs.category,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.category),
@@ -132,7 +132,7 @@ exports.privateMetafields = (product) => {
       },
     },
     {
-      key: shopify.privateMetafields.product.bsDescription.key,
+      key: shopify.privateMetafields.product.bs.description,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {
         value: replaceEmptyString(product.description),
