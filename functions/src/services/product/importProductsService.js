@@ -1,4 +1,4 @@
-const {getBsProducts} = require("../common/getBsData");
+const {getBsProducts} = require("../common/getBsProducts");
 const functions = require("firebase-functions");
 const {productVariantsByBarcode} = require("../../services/graphQl/product/query/productVariantsByBarcode");
 const {productVariants} = require("../../services/graphQl/product/query/productVariants");
