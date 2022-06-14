@@ -27,7 +27,7 @@ exports.getGoogleShoppingData = async function(productId, ean) {
   const responseProductId = await fetch(urlSearch + paramsSearch);
   const dataProductId = await responseProductId.json();
 
-  if (dataProductId.error) {
+  if (dataProductId && dataProductId.error) {
     functions.logger.info("Could not load google shopping data for product id:", productId, dataProductId, {
       structuredData: true,
     });

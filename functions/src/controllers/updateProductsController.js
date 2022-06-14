@@ -62,7 +62,7 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
     }
 
     // Skip when product has no given minium stock
-    if (!product.totalInventory > minimumStock) {
+    if (!(product.totalInventory > minimumStock)) {
       functions.logger.warn("Not given minimum stock for product", product.id, product.title, minimumStock, {
         structuredData: true,
       });
@@ -88,7 +88,7 @@ async function loopProductVariantsSlice(product, productList) {
 
     // Skip variants without barcode (required for google shopping query)
     if (!variant.barcode) {
-      functions.logger.log("Variant has not barcode", variant.id, variant.displayName, {
+      functions.logger.log("Variant has no barcode", variant.id, variant.displayName, {
         structuredData: true,
       });
       continue;
@@ -96,7 +96,7 @@ async function loopProductVariantsSlice(product, productList) {
 
     const googleShoppingData = await getGoogleShoppingData(product.id, variant.barcode);
 
-    // skip variant if Google Shopping data could not be loaded
+    // skip variant if google shopping data could not be loaded
     if (!googleShoppingData && !googleShoppingData.product_results) {
       functions.logger.warn("Could not load google shopping data for", variant.id, variant.displayName, googleShoppingData.error, {
         structuredData: true,
