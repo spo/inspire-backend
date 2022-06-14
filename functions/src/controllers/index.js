@@ -1,1 +1,2 @@
-module.exports.bulkUpdateProductsController = require("./bulkUpdateProductsController");
+module.exports.updateProductsController = require("./updateProductsController");
+module.exports.importProductsController = require("./importProductsController");

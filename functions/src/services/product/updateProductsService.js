@@ -1,7 +1,7 @@
 const functions = require("firebase-functions");
 const {productCreateMedia} = require("../graphQl/product/mutation/productCreateMedia");
 const {productVariantAppendMedia} = require("../graphQl/product/mutation/productVariantAppendMedia");
-const {productDescription} = require("../../services/graphQl/product/query/productDescription");
+const {productDescription} = require("../graphQl/product/query/productDescription");
 const {productUpdate} = require("../graphQl/product/mutation/productUpdate");
 const {productUpdateTitleInizialised} = require("../graphQl/product/mutation/productUpdateTitleInizialised");
 const {wait} = require("../../utils/wait");
@@ -190,7 +190,7 @@ exports.updateProductImage= async (product, variant, media) => {
 
   if (resultProductVariantAppendMedia.userErrors && resultProductVariantAppendMedia.userErrors.length > 0) {
     const {code, field, message} = resultProductVariantAppendMedia.userErrors[0];
-    functions.logger.info("Could not attach media to variant", variant.id, variant.displayName, code, field, message, {
+    functions.logger.warn("Could not attach media to variant", variant.id, variant.displayName, code, field, message, {
       structuredData: true,
     });
     return;
