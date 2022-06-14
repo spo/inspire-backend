@@ -1,11 +1,13 @@
 const functions = require("firebase-functions");
 const {importProductsController, updateProductsController} = require("./src/controllers");
 
-// functions
-exports.importProducts = functions.runWith({
+const runOptions = {
   memory: "2GB",
   timeoutSeconds: 540,
-}).https.onCall(async (data) => {
+};
+
+// functions
+exports.importProducts = functions.runWith(runOptions).https.onCall(async (data) => {
   try {
     const resultImportProducts = await importProductsController.importProducts(data.slice);
     return {data: resultImportProducts};
@@ -14,9 +16,9 @@ exports.importProducts = functions.runWith({
   }
 });
 
-exports.updateProducts = functions.https.onCall(async (data) => {
+exports.updateProducts = functions.runWith(runOptions).https.onCall(async (data) => {
   try {
-    const resultUpdateProducts = await updateProductsController.updateProducts(data.minimumStock);
+    const resultUpdateProducts = await updateProductsController.updateProducts(data.minimumStock, data.updateTitle);
     return {data: resultUpdateProducts};
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);

@@ -32,7 +32,7 @@ module.exports = {
       product: {
         namespace: "product",
         // bs -> B&S International (supplier)
-        initialised: "inizialised",
+        initialised: "inizialised_title",
         bs: {
           articleNumber: "bs_articleNumber",
           gender: "bs_gender",

@@ -53,9 +53,9 @@ exports.updateProductTitle = async (product, title) => {
     return;
   }
 
-  // Skip variants that already has been initialised
+  // Skip variants that already has been initialised title
   if (product.privateMetafield.value === "true") {
-    functions.logger.warn("Product title has already been initialised", product.id, product.title, {
+    functions.logger.warn("Product has already been initialised_title", product.id, product.title, {
       structuredData: true,
     });
     return;

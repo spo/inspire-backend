@@ -3,7 +3,7 @@ const {shopify} = require("../../../../../config/config");
 const {gql, rawRequest} = require("graphql-request");
 
 /**
- * The metafield indicates whether the product has already been initialised or not.
+ * The metafield indicates whether the product has already been initialised title or not.
 * @param {string} productId The product id to be updated
  * @return {object} The updated product variant with private metafield"
  */
@@ -52,7 +52,7 @@ exports.productCreatePrivateMetafields = async (productId) => {
     }
 
     if (data.productUpdate.userErrors && data.productUpdate.userErrors.length > 0) {
-      functions.logger.warn("Could not create private metafield initialised", productId, {
+      functions.logger.warn("Could not create private metafield initialised_title", productId, {
         structuredData: true,
       });
     } else {

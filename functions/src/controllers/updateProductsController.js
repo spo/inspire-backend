@@ -6,8 +6,9 @@ const {productsSlice} = require("../services/graphQl/product/query/productsSlice
 /**
  * Update title, description, images for all products including variants.
  * @param {number} minimumStock Minimum required stock in order to update product
+ * @param {boolean} updateTitle Whether to update the title
  */
-exports.updateProducts = async (minimumStock = 0) => {
+exports.updateProducts = async (minimumStock = 0, updateTitle = false) => {
   const productList = [];
   let hasMoreProductsToLoad = true;
   let cursor = null;
@@ -19,7 +20,7 @@ exports.updateProducts = async (minimumStock = 0) => {
   try {
     // Loop over all products. The products are loaded with paggination.
     while (hasMoreProductsToLoad) {
-      const result = await loopProductsSlice(productList, minimumStock, cursor);
+      const result = await loopProductsSlice(productList, minimumStock, updateTitle, cursor);
       hasMoreProductsToLoad = result.hasNextPage;
       cursor = result.endCursor;
     }
@@ -35,9 +36,10 @@ exports.updateProducts = async (minimumStock = 0) => {
  *
  * @param {Array} productList List contains updated products/variansts
  * @param {number} minimumStock Minimum required stock in order to update product
+ * @param {boolean} updateTitle Whether to update the title
  * @param {string} cursor The cursor corresponding to the last node in edges
  */
-async function loopProductsSlice(productList, minimumStock, cursor) {
+async function loopProductsSlice(productList, minimumStock, updateTitle, cursor) {
   const resultProductsSlice = await productsSlice(cursor);
   const totalProducts = resultProductsSlice.products.nodes.length;
   const products = resultProductsSlice.products.nodes;
@@ -69,7 +71,7 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
       continue;
     }
 
-    await loopProductVariantsSlice(product, productList);
+    await loopProductVariantsSlice(product, productList, updateTitle);
   }
 
   return {productList, endCursor, hasNextPage};
@@ -79,9 +81,11 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
  * Loop over variants slice and update variants
  * @param {object} product Product that includes variants to loop over
  * @param {Array} productList List contains updated products/variansts
-  * @return {Array } All updated variants
+ * @param {boolean} updateTitle Whether to update the title
+ * @return {Array } All updated variants
+ *
  */
-async function loopProductVariantsSlice(product, productList) {
+async function loopProductVariantsSlice(product, productList, updateTitle) {
   // Loop over variants
   for (let index = 0; index < product.totalVariants; index++) {
     const variant = product.variants.nodes[index];
@@ -110,16 +114,18 @@ async function loopProductVariantsSlice(product, productList) {
       });
     }
 
-    // add title
-    const resultProductTitle = await updateProductsService.updateProductTitle(product, googleShoppingData.product_results.title);
+    if (updateTitle) {
+      // add title
+      const resultProductTitle = await updateProductsService.updateProductTitle(product, googleShoppingData.product_results.title);
 
-    if (resultProductTitle) {
-      productList.push({
-        title: {
-          productId: resultProductTitle.productUpdate.product.id,
-          productTitle: resultProductTitle.productUpdate.product.title,
-        },
-      });
+      if (resultProductTitle) {
+        productList.push({
+          title: {
+            productId: resultProductTitle.productUpdate.product.id,
+            productTitle: resultProductTitle.productUpdate.product.title,
+          },
+        });
+      }
     }
 
     // add description
