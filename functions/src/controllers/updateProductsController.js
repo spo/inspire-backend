@@ -1,5 +1,5 @@
 const functions = require("firebase-functions");
-const getGoogleShoppingData = require("../services/common/getGoogleShoppingData"); // TODO: use {}
+const {getGoogleShoppingData} = require("../services/common/getGoogleShoppingData");
 const {updateProductsService} = require("../services");
 const {productsSlice} = require("../services/graphQl/product/query/productsSlice");
 
@@ -49,7 +49,6 @@ async function loopProductsSlice(productList, minimumStock, cursor) {
     throw new functions.https.HttpsError("aborted", "No products available", resultProductsSlice);
   }
 
-  // TODO: ggf. durch map ersetzen
   // Loop over products slice
   for (let index = 0; index < totalProducts; index++) {
     const product = products[index];
@@ -95,7 +94,7 @@ async function loopProductVariantsSlice(product, productList) {
       continue;
     }
 
-    const googleShoppingData = await getGoogleShoppingData.getGoogleShoppingData(product.id, variant.barcode);
+    const googleShoppingData = await getGoogleShoppingData(product.id, variant.barcode);
 
     // skip variant if Google Shopping data could not be loaded
     if (!googleShoppingData && !googleShoppingData.product_results) {

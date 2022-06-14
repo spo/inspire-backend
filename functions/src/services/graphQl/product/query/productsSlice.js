@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const {gql, request} = require("graphql-request");
-const config = require("../../../../config/config");
+const {shopify} = require("../../../../config/config");
 
 /**
  * Load all products in slices. Limit: 100 variants!
@@ -8,16 +8,15 @@ const config = require("../../../../config/config");
  * @return {object} Product slice objects
  */
 exports.productsSlice = async (cursor) => {
-  // TODO: use config.js for privateMetafield -> product_bs_inizialised and product
   const productsSlice = gql`
-    query ($numProducts: Int!, $cursor: String) {
+    query ($numProducts: Int!, $cursor: String, $metafieldKey: String!, $metafieldNamespace: String!) {
       products(first: $numProducts, after: $cursor) {
         nodes {
           id
           title
           totalInventory
           totalVariants
-          privateMetafield(key: "product_bs_inizialised", namespace: "product") {
+          privateMetafield(key: $metafieldKey, namespace: $metafieldNamespace) {
             value
             valueType
           }
@@ -43,10 +42,12 @@ exports.productsSlice = async (cursor) => {
   const variables = {
     numProducts: 1,
     cursor: cursor,
+    metafieldKey: shopify.privateMetafields.product.bsInitialised,
+    metafieldNamespace: shopify.privateMetafields.product.namespace,
   };
 
   try {
-    const productSlice = await request(config.shopify.endpoint, productsSlice, variables);
+    const productSlice = await request(shopify.endpoint, productsSlice, variables);
     return productSlice;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);

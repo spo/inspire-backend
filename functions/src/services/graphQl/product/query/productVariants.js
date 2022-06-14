@@ -5,7 +5,7 @@ const {shopify} = require("../../../../config/config");
 /**
  * Get product variants
 * @param {string} cursor The cursor corresponding to the last node in edges
- * @return {object} Product variants with private metafields "product_bs_description"
+ * @return {object} Product variants with private metafields "bs_description"
  */
 exports.productVariants = async (cursor) => {
   try {
@@ -32,7 +32,7 @@ exports.productVariants = async (cursor) => {
 
     const variables = {
       namespace: shopify.privateMetafields.product.namespace,
-      key: shopify.privateMetafields.product.bsDescription.key,
+      key: shopify.privateMetafields.product.bsDescription,
       numProducts: 10,
       cursor,
     };

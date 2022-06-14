@@ -34,8 +34,8 @@ exports.productUpdateTitleInizialised = async (productId, value) => {
       id: productId,
       privateMetafields: [
         {
-          key: shopify.privateMetafields.product.bsInizialisedle.key,
-          namespace: shopify.privateMetafields.product.bsInizialisedle.namespace,
+          key: shopify.privateMetafields.product.bsInitialised,
+          namespace: shopify.privateMetafields.product.namespace,
           valueInput: {
             value,
             valueType: "STRING",

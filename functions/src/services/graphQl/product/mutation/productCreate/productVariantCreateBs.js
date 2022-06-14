@@ -81,9 +81,12 @@ exports.productVariantCreateBs = async (product, productId) => {
 
       return;
     } else {
-      functions.logger.info("Product varaint created", data.productVariantCreate.productVariant.id, data.productVariantCreate.productVariant.displayName, data.productVariantCreate.product.barcode, {
-        structuredData: true,
-      });
+      functions.logger.info("Product varaint created",
+          data.productVariantCreate.productVariant.id,
+          data.productVariantCreate.productVariant.barcode,
+          data.productVariantCreate.productVariant.displayName, {
+            structuredData: true,
+          });
 
       return data.productVariantCreate.productVariant;
     }

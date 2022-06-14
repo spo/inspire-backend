@@ -3,7 +3,7 @@ const functions = require("firebase-functions");
 require("dotenv").config();
 
 /**
- * TODO: add comment
+ * Get google shopping data like images, titles, descriptions.
  * @param {*} productId
  * @param {*} ean
  * @return {object} google shopping data
