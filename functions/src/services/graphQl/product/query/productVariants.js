@@ -32,7 +32,7 @@ exports.productVariants = async (cursor) => {
 
     const variables = {
       namespace: shopify.privateMetafields.product.namespace,
-      key: shopify.privateMetafields.product.bsDescription,
+      key: shopify.privateMetafields.product.bs.description,
       numProducts: 10,
       cursor,
     };

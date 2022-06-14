@@ -1,31 +1,24 @@
 const functions = require("firebase-functions");
-const {privateMetafields} = require("./productCreateConfig");
 const {shopify} = require("../../../../../config/config");
 const {gql, rawRequest} = require("graphql-request");
 
 /**
- * Add private metafield for product variant
-* @param {string} productVariantId The product variant id
-* @param {object} product The product variant id
+ * The metafield indicates whether the product has already been initialised or not.
+* @param {string} productId The product id to be updated
  * @return {object} The updated product variant with private metafield"
  */
-exports.productCreatePrivateMetafields = async (productVariantId, product) => {
+exports.productCreatePrivateMetafields = async (productId) => {
   try {
-    const resultPrivateMetafields = privateMetafields(product);
-
-    const mutationProductVariantUpdate = gql`mutation productVariantUpdate($input: ProductVariantInput!) {
-      productVariantUpdate(input: $input) {
+    const mutationProductUpdate = gql`
+    mutation productUpdate($input: ProductInput!) {
+      productUpdate(input: $input) {
         product {
           id
-        }
-        productVariant {
-          displayName
-          privateMetafields(first: 30) {
-            edges {
-              node {
-                key
-                value
-              }
+           privateMetafields(first: 10) {
+            nodes {
+              value
+              valueType
+              namespace
             }
           }
         }
@@ -38,23 +31,32 @@ exports.productCreatePrivateMetafields = async (productVariantId, product) => {
 
     const variables = {
       input: {
-        id: productVariantId,
-        privateMetafields: resultPrivateMetafields,
+        id: productId,
+        privateMetafields: [
+          {
+            key: shopify.privateMetafields.product.initialised,
+            namespace: shopify.privateMetafields.product.namespace,
+            valueInput: {
+              value: "false",
+              valueType: "STRING",
+            },
+          },
+        ],
       },
     };
 
-    const {data, errors, extensions} = await rawRequest(shopify.endpoint, mutationProductVariantUpdate, variables);
+    const {data, errors, extensions} = await rawRequest(shopify.endpoint, mutationProductUpdate, variables);
 
     if (errors) {
       throw new functions.https.HttpsError("internal", errors);
     }
 
-    if (data.productVariantUpdate.userErrors && data.productVariantUpdate.userErrors.length > 0) {
-      functions.logger.warn("Could not create private metafields", product.description, product.barcode, data.productVariantUpdate.userErrors, {
+    if (data.productUpdate.userErrors && data.productUpdate.userErrors.length > 0) {
+      functions.logger.warn("Could not create private metafield initialised", productId, {
         structuredData: true,
       });
     } else {
-      return {data: data.productVariantUpdate, extensions: extensions.cost};
+      return {data: data.productUpdate.product, extensions: extensions.cost};
     }
   } catch (error) {
     throw new functions.https.HttpsError(error.code, error.message, error.type);

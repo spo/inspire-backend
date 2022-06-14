@@ -42,7 +42,7 @@ exports.productsSlice = async (cursor) => {
   const variables = {
     numProducts: 1,
     cursor: cursor,
-    metafieldKey: shopify.privateMetafields.product.bsInitialised,
+    metafieldKey: shopify.privateMetafields.product.initialised,
     metafieldNamespace: shopify.privateMetafields.product.namespace,
   };
 
