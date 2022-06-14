@@ -108,6 +108,14 @@ exports.privateMetafields = (product) => {
       },
     },
     {
+      key: shopify.privateMetafields.product.bsEdition,
+      namespace: shopify.privateMetafields.product.namespace,
+      valueInput: {
+        value: replaceEmptyString(product.edition),
+        valueType: "STRING",
+      },
+    },
+    {
       key: shopify.privateMetafields.product.bsAdditionalProductInformation,
       namespace: shopify.privateMetafields.product.namespace,
       valueInput: {

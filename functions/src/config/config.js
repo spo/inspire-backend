@@ -40,6 +40,7 @@ module.exports = {
         bsSort: "bs_sort",
         bsUsedFor: "bs_usedFor",
         bsVersion: "bs_version",
+        bsEdition: "bs_edition",
         bsColor: "bs_color",
         bsLength: "bs_length",
         bsWidth: "bs_width",
