@@ -64,7 +64,7 @@ async function loopProductsSlice(productList, minimumStock, updateTitle, cursor)
     }
 
     // Skip when product has no given minium stock
-    if (!(product.totalInventory > minimumStock)) {
+    if (!(product.totalInventory >= minimumStock)) {
       functions.logger.warn("Not given minimum stock for product", product.id, product.title, minimumStock, {
         structuredData: true,
       });
@@ -112,6 +112,10 @@ async function loopProductVariantsSlice(product, productList, updateTitle) {
       functions.logger.warn("No google shopping data for", variant.id, variant.displayName, googleShoppingData.product_results.error, {
         structuredData: true,
       });
+
+      if (googleShoppingData.product_results.error === "Product page blank.") {
+        continue;
+      }
     }
 
     if (updateTitle) {
