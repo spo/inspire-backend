@@ -6,11 +6,12 @@ const {shopify} = require("../../../../config/config");
  * Get product variants
 * @param {string} cursor The cursor corresponding to the last node in edges
  * @return {object} Product variants with private metafields "bs_description"
+ * @param {string} query Query filter options
  */
-exports.productVariants = async (cursor) => {
+exports.productVariants = async (cursor, query) => {
   try {
-    const queryProductVariants = gql `query ($namespace: String!, $key: String!, $numProducts: Int!, $cursor: String) {
-      productVariants(first: $numProducts, after: $cursor) {
+    const queryProductVariants = gql `query ($namespace: String!, $key: String!, $numProducts: Int!, $cursor: String, $query: String!) {
+      productVariants(first: $numProducts, after: $cursor, query: $query,) {
         pageInfo {
           hasNextPage
           endCursor
@@ -35,6 +36,7 @@ exports.productVariants = async (cursor) => {
       key: shopify.privateMetafields.product.bs.description,
       numProducts: 10,
       cursor,
+      query: query,
     };
 
     const {data, errors, extensions} = await rawRequest(shopify.endpoint, queryProductVariants, variables);

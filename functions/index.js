@@ -1,5 +1,5 @@
 const functions = require("firebase-functions");
-const {importProductsController, updateProductsController, missingProductsController} = require("./src/controllers");
+const {importProductsController, updateProductsController, missingProductsController, missingProductsPrivateFieldsController} = require("./src/controllers");
 
 const runOptions = {
   memory: "2GB",
@@ -29,6 +29,15 @@ exports.missingProducts = functions.runWith(runOptions).https.onCall(async (data
   try {
     const resultMissingProducts = await missingProductsController.missingProducts(data.slice);
     return {data: resultMissingProducts};
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message, error.field);
+  }
+});
+
+exports.missingProductsPrivateFields = functions.runWith(runOptions).https.onCall(async (data) => {
+  try {
+    const resultMissingProductsPrivateFields = await missingProductsPrivateFieldsController.missingProductsPrivateFields(data.query);
+    return {data: resultMissingProductsPrivateFields};
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
   }
