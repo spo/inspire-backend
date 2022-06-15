@@ -153,7 +153,7 @@ async function getAllProductVariants() {
 
     // Loop over all existing product variants. The product variants are loaded with paggination.
     while (hasMoreProductsToLoad) {
-      const resultProductVariants = await productVariants(cursor);
+      const resultProductVariants = await productVariants(cursor, "");
 
       if (resultProductVariants && resultProductVariants.extensions) {
         await apiWait(resultProductVariants.extensions);
