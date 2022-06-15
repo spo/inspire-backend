@@ -1,7 +1,6 @@
 const functions = require("firebase-functions");
 const {productCreateMedia} = require("../graphQl/product/mutation/productCreateMedia");
 const {productVariantAppendMedia} = require("../graphQl/product/mutation/productVariantAppendMedia");
-const {productDescription} = require("../graphQl/product/query/productDescription");
 const {productUpdate} = require("../graphQl/product/mutation/productUpdate");
 const {productUpdateTitleInizialised} = require("../graphQl/product/mutation/productUpdateTitleInizialised");
 const {wait} = require("../../utils/wait");
