@@ -18,7 +18,7 @@ exports.importProducts = functions.runWith(runOptions).https.onCall(async (data)
 
 exports.updateProducts = functions.runWith(runOptions).https.onCall(async (data) => {
   try {
-    const resultUpdateProducts = await updateProductsController.updateProducts(data.minimumStock, data.updateTitle);
+    const resultUpdateProducts = await updateProductsController.updateProducts(data.minimumStock, data.updateTitle, data.query);
     return {data: resultUpdateProducts};
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);

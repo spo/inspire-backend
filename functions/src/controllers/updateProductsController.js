@@ -7,8 +7,9 @@ const {productsSlice} = require("../services/graphQl/product/query/productsSlice
  * Update title, description, images for all products including variants.
  * @param {number} minimumStock Minimum required stock in order to update product
  * @param {boolean} updateTitle Whether to update the title
+ * @param {string} query Query filter options
  */
-exports.updateProducts = async (minimumStock = 0, updateTitle = false) => {
+exports.updateProducts = async (minimumStock = 0, updateTitle = false, query = "") => {
   const productList = [];
   let hasMoreProductsToLoad = true;
   let cursor = null;
@@ -20,7 +21,7 @@ exports.updateProducts = async (minimumStock = 0, updateTitle = false) => {
   try {
     // Loop over all products. The products are loaded with paggination.
     while (hasMoreProductsToLoad) {
-      const result = await loopProductsSlice(productList, minimumStock, updateTitle, cursor);
+      const result = await loopProductsSlice(productList, minimumStock, updateTitle, cursor, query);
       hasMoreProductsToLoad = result.hasNextPage;
       cursor = result.endCursor;
     }
@@ -38,9 +39,10 @@ exports.updateProducts = async (minimumStock = 0, updateTitle = false) => {
  * @param {number} minimumStock Minimum required stock in order to update product
  * @param {boolean} updateTitle Whether to update the title
  * @param {string} cursor The cursor corresponding to the last node in edges
+ * @param {string} query Query filter options
  */
-async function loopProductsSlice(productList, minimumStock, updateTitle, cursor) {
-  const resultProductsSlice = await productsSlice(cursor);
+async function loopProductsSlice(productList, minimumStock, updateTitle, cursor, query) {
+  const resultProductsSlice = await productsSlice(cursor, query);
   const totalProducts = resultProductsSlice.products.nodes.length;
   const products = resultProductsSlice.products.nodes;
   const endCursor = resultProductsSlice.products.pageInfo.endCursor;
@@ -82,7 +84,7 @@ async function loopProductsSlice(productList, minimumStock, updateTitle, cursor)
  * @param {object} product Product that includes variants to loop over
  * @param {Array} productList List contains updated products/variansts
  * @param {boolean} updateTitle Whether to update the title
- * @return {Array } All updated variants
+ * @return {Array} All updated variants
  *
  */
 async function loopProductVariantsSlice(product, productList, updateTitle) {
@@ -98,24 +100,17 @@ async function loopProductVariantsSlice(product, productList, updateTitle) {
       continue;
     }
 
+    const updateRequired = isUpdateRequired(product, updateTitle);
+
+    if (!updateRequired) {
+      continue;
+    }
+
     const googleShoppingData = await getGoogleShoppingData(product.id, variant.barcode);
 
     // skip variant if google shopping data could not be loaded
-    if (!googleShoppingData && !googleShoppingData.product_results) {
-      functions.logger.warn("Could not load google shopping data for", variant.id, variant.displayName, googleShoppingData.error, {
-        structuredData: true,
-      });
-    }
-
-    // skip variant if there is no google shopping data for the variant
-    if (googleShoppingData.product_results.error) {
-      functions.logger.warn("No google shopping data for", variant.id, variant.displayName, googleShoppingData.product_results.error, {
-        structuredData: true,
-      });
-
-      if (googleShoppingData.product_results.error === "Product page blank.") {
-        continue;
-      }
+    if (googleShoppingData.error) {
+      continue;
     }
 
     if (updateTitle) {
@@ -158,4 +153,18 @@ async function loopProductVariantsSlice(product, productList, updateTitle) {
   }
 
   return productList;
+}
+
+/**
+ * Check whether an update must be carried out. If the title, description and images are already available, avoid an update.
+ * @param {*} product
+ * @param {*} updateTitle
+ * @return {boolean} True or false whether an update is necessary
+ */
+function isUpdateRequired(product, updateTitle) {
+  if (!updateTitle && product.bodyHtml !== "" && product.variants.nodes.length > 0 && product.variants.nodes[0].image) {
+    return false;
+  } else {
+    return true;
+  }
 }

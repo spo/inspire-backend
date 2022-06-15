@@ -1,10 +1,10 @@
 const functions = require("firebase-functions");
 const {productCreateMedia} = require("../graphQl/product/mutation/productCreateMedia");
 const {productVariantAppendMedia} = require("../graphQl/product/mutation/productVariantAppendMedia");
-const {productDescription} = require("../graphQl/product/query/productDescription");
 const {productUpdate} = require("../graphQl/product/mutation/productUpdate");
 const {productUpdateTitleInizialised} = require("../graphQl/product/mutation/productUpdateTitleInizialised");
 const {wait} = require("../../utils/wait");
+const {shopify} = require("../../config/config");
 
 /**
  * Add description to product variant
@@ -55,7 +55,7 @@ exports.updateProductTitle = async (product, title) => {
 
   // Skip variants that already has been initialised title
   if (product.privateMetafield.value === "true") {
-    functions.logger.warn("Product has already been initialised_title", product.id, product.title, {
+    functions.logger.warn("Product has already been " + shopify.privateMetafields.product.initialised, product.id, product.title, {
       structuredData: true,
     });
     return;
@@ -96,18 +96,8 @@ exports.updateProductDescription = async (product, description) => {
     return;
   }
 
-  const resultProductDescription = await productDescription(product.id);
-
-  // Skip variants with existing description
-  if (resultProductDescription.product == null) {
-    functions.logger.warn("Could not load product description for", product.id, product.title, {
-      structuredData: true,
-    });
-    return;
-  }
-
-  if (resultProductDescription.product.bodyHtml) {
-    functions.logger.warn("Product already has a description", product.id, product.title, {
+  if (product.bodyHtml) {
+    functions.logger.warn("Product has already a description", product.id, product.title, {
       structuredData: true,
     });
     return;
@@ -142,7 +132,7 @@ exports.updateProductImage= async (product, variant, media) => {
 
   // Skip variants with existing images
   if (variant.image) {
-    functions.logger.warn("Variant has existing images already", variant.id, variant.displayName, {
+    functions.logger.warn("Variant has already images", variant.id, variant.displayName, {
       structuredData: true,
     });
     return;
