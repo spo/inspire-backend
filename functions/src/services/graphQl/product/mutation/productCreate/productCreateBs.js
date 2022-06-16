@@ -55,6 +55,7 @@ exports.productCreateBs = async (product) => {
       options: [
         resultOptionColor, resultOptionSelection, resultOptionWeight,
       ],
+      tags: [product.description],
       variants: [
         {
           barcode: product.barcode,
