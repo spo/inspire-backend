@@ -56,7 +56,7 @@ const startImport = async (productVariantsToImport) => {
         continue;
       }
 
-      const importedProductVariants = await importProductVariant(productVariantToImport, productVariantsToImport);
+      const importedProductVariants = await importProductVariant(productVariantToImport);
       importedProductVariantsList.push(importedProductVariants);
 
 

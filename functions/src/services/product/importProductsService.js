@@ -12,9 +12,8 @@ const {apiWait} = require("../../utils/apiWait");
 /**
  * Create new product or product variant
 * @param {object} productVariantToImport Product variant to be imported
-* @param {Array} productVariantsToImport Product variants to be imported
  */
-exports.importProductVariant = async (productVariantToImport, productVariantsToImport) => {
+exports.importProductVariant = async (productVariantToImport) => {
   try {
     const product = await productTag(productVariantToImport.description);
 

@@ -23,9 +23,9 @@ exports.productVariantCreateBs = async (product, productId) => {
           title
         }
         productVariant {
-          displayName
           id
           barcode
+          displayName
         }
         userErrors {
           field

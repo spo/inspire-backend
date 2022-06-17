@@ -26,6 +26,7 @@ exports.productCreateBs = async (product) => {
             nodes {
               id
               barcode
+              displayName
             }
           }
         }
