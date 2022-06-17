@@ -4,7 +4,7 @@ require("dotenv").config();
 
 /**
  * Get BS product feed
- * @return {object} Product feed
+ * @return {object} BS Product feed
  */
 exports.getBsProducts = async function() {
   const {BS_API_URL, BS_API_KEY} = process.env;
