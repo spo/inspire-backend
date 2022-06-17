@@ -17,6 +17,9 @@ exports.productVariantsByBarcode = async (barcode) => {
             id
             displayName
             barcode
+            product {
+              id
+            }
           }
         }
       }

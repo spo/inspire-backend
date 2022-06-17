@@ -1,7 +1,11 @@
 const functions = require("firebase-functions");
-const {importProductsController, importProductController, updateProductsController, missingProductsController,
+const {importProductsController,
+  importProductController,
+  updateProductsController,
+  missingProductsController,
   missingProductsPrivateFieldsController,
-  duplicateProductsController} = require("./src/controllers");
+  duplicateProductsController,
+  createPrivateMetafieldsController} = require("./src/controllers");
 
 const runOptions = {
   memory: "2GB",
@@ -22,6 +26,15 @@ exports.importProduct = functions.runWith(runOptions).https.onCall(async (data) 
   try {
     const resultImportProduct = await importProductController.importProduct(data.articleNumber);
     return {data: resultImportProduct};
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message, error.field);
+  }
+});
+
+exports.createPrivateMetafields = functions.runWith(runOptions).https.onCall(async (data) => {
+  try {
+    const resultCreatePrivateMetafields = await createPrivateMetafieldsController.createPrivateMetafields(data.barcode, data.articleNumber, data.updateOnlyVaraint);
+    return {data: resultCreatePrivateMetafields};
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);
   }
