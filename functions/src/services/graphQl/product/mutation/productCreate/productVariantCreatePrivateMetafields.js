@@ -17,9 +17,12 @@ exports.productVariantCreatePrivateMetafields = async (productVariantId, product
       productVariantUpdate(input: $input) {
         product {
           id
+          title
         }
         productVariant {
+          id
           displayName
+          barcode
           privateMetafields(first: 30) {
             edges {
               node {
