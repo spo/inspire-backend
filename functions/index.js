@@ -15,7 +15,7 @@ const runOptions = {
 // functions
 exports.importProducts = functions.runWith(runOptions).https.onCall(async (data) => {
   try {
-    const resultImportProducts = await importProductsController.importProducts(data.slice);
+    const resultImportProducts = await importProductsController.importProducts(data.slice, data.reverse);
     return {data: resultImportProducts};
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field);

@@ -5,10 +5,16 @@ const {productVariantsByBarcode} = require("../services/graphQl/product/query/pr
 const {apiWait} = require("../utils/apiWait");
 const {wait} = require("../utils/wait");
 
-exports.importProducts = async (slice = {from: 0}) => {
+exports.importProducts = async (slice = {from: 0}, reverse = false) => {
   try {
     const productsToImport = await getBsProducts();
-    const result = await startImport(productsToImport.slice(slice.from, slice.to));
+    const productsToImportSlice = productsToImport.slice(slice.from, slice.to);
+
+    if (reverse) {
+      productsToImportSlice.reverse();
+    }
+
+    const result = await startImport(productsToImportSlice);
     return result;
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message, error.field, error.code);
